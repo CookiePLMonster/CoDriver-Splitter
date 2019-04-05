@@ -1,0 +1,2 @@
+EXPORTS
+	XAudio2Create=MOXAudio2Create
