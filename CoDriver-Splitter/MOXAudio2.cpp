@@ -377,8 +377,18 @@ HRESULT WINAPI MOXAudio2::CreateMasteringVoice(IXAudio2MasteringVoice ** ppMaste
 	IXAudio2MasteringVoice* mainVoice = nullptr;
 	IXAudio2MasteringVoice* auxVoice = nullptr;
 
-	m_auxXA2->CreateMasteringVoice(&auxVoice, InputChannels, InputSampleRate, Flags, GetCommunicationsDeviceString().c_str(), pEffectChain, StreamCategory);
+	HRESULT hrAux = m_auxXA2->CreateMasteringVoice(&auxVoice, InputChannels, InputSampleRate, Flags, GetCommunicationsDeviceString().c_str(), pEffectChain, StreamCategory);
+	if ( FAILED(hrAux) )
+	{
+		return hrAux;
+	}
+
 	HRESULT hrMain = m_mainXA2->CreateMasteringVoice(&mainVoice, InputChannels, InputSampleRate, Flags, szDeviceId, pEffectChain, StreamCategory);
+	if ( FAILED(hrMain) )
+	{
+		auxVoice->DestroyVoice();
+		return hrMain;
+	}
 
 	// TODO: Manage this pointer
 	*ppMasteringVoice = new MOXAudio2MasteringVoice( mainVoice, auxVoice );
@@ -393,7 +403,7 @@ HRESULT WINAPI MOXAudio2::CreateMasteringVoice(IXAudio2MasteringVoice ** ppMaste
 		m_auxNumChannels = PopCount( mask );
 	}
 
-	return hrMain;
+	return S_OK;
 }
 
 HRESULT WINAPI MOXAudio2::StartEngine(void)
