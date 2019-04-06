@@ -73,6 +73,18 @@ std::wstring GetCommunicationsDeviceString()
 	return result;
 }
 
+void FixupMasteringVoiceChannelMask( DWORD* pChannelmask )
+{
+	// Fixup rules, backed by testing in DiRT Rally:
+	// - We need at least 4 speakers for the game to emit 5.1 audio
+	// - We will always add front left/right and center speakers, and additionally add side speakers if back speakers are not present
+	*pChannelmask |= SPEAKER_FRONT_LEFT|SPEAKER_FRONT_RIGHT|SPEAKER_FRONT_CENTER;
+	if ( (*pChannelmask & (SPEAKER_FRONT_LEFT_OF_CENTER|SPEAKER_FRONT_RIGHT_OF_CENTER | SPEAKER_BACK_LEFT|SPEAKER_BACK_RIGHT)) == 0 )
+	{
+		*pChannelmask |= SPEAKER_SIDE_LEFT|SPEAKER_SIDE_RIGHT;
+	}
+}
+
 class MOXAudio2 final : public IXAudio2
 {
 public:
@@ -482,10 +494,12 @@ inline void MOXAudio2SourceVoice::DestroyVoice()
 
 inline HRESULT __stdcall MOXAudio2MasteringVoice::GetChannelMask(DWORD * pChannelmask)
 {
-	DWORD mask = 63;
-	//HRESULT hr = m_interface->GetChannelMask( &mask );
-	*pChannelmask = mask | SPEAKER_FRONT_CENTER;
-	return S_OK;
+	HRESULT hr = m_mainVoice->GetChannelMask( pChannelmask );
+	if ( SUCCEEDED(hr) )
+	{
+		FixupMasteringVoiceChannelMask( pChannelmask );
+	}
+	return hr;
 }
 
 inline void __stdcall MOXAudio2MasteringVoice::GetVoiceDetails(XAUDIO2_VOICE_DETAILS * pVoiceDetails)
