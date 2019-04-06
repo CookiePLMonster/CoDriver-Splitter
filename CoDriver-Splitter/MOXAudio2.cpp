@@ -139,6 +139,14 @@ public:
 	MOXAudio2( IXAudio2* main, IXAudio2* aux )
 		: m_mainXA2( main ), m_auxXA2( aux )
 	{
+		m_mainXA2->AddRef();
+		m_auxXA2->AddRef();
+	}
+
+	~MOXAudio2()
+	{
+		m_auxXA2->Release();
+		m_mainXA2->Release();
 	}
 
 private:
@@ -252,35 +260,48 @@ __declspec(dllexport) HRESULT WINAPI MOXAudio2Create( IXAudio2 **ppXAudio2, UINT
 
 }
 
-// Inherited via IXAudio2
+
 
 HRESULT WINAPI MOXAudio2::QueryInterface(REFIID riid, void ** ppvInterface)
 {
-	*ppvInterface = this;
-	return S_OK;
+	if ( ppvInterface == nullptr ) return E_POINTER;
+
+	if ( riid == IID_IUnknown || riid == __uuidof(IXAudio2) )
+	{
+		*ppvInterface = static_cast<IXAudio2*>(this);
+		AddRef();
+		return S_OK;
+	}
+
+	*ppvInterface = nullptr;
+	return E_NOINTERFACE;
 }
 
 ULONG WINAPI MOXAudio2::AddRef(void)
 {
-	return 0;
+	return InterlockedIncrement( &m_ref );
 }
 
 ULONG WINAPI MOXAudio2::Release(void)
 {
-	return 0;
+	const LONG ref = InterlockedDecrement( &m_ref );
+	if ( ref == 0 )
+	{
+		delete this;
+	}
+	return ref;
 }
 
 HRESULT WINAPI MOXAudio2::RegisterForCallbacks(IXAudio2EngineCallback * pCallback)
 {
-	HRESULT hr = m_mainXA2->RegisterForCallbacks(pCallback);
 	m_auxXA2->RegisterForCallbacks(pCallback);
-	return hr;
+	return m_mainXA2->RegisterForCallbacks(pCallback);
 }
 
 void WINAPI MOXAudio2::UnregisterForCallbacks(IXAudio2EngineCallback * pCallback)
 {
-	m_mainXA2->UnregisterForCallbacks(pCallback);
 	m_auxXA2->UnregisterForCallbacks(pCallback);
+	m_mainXA2->UnregisterForCallbacks(pCallback);
 }
 
 HRESULT WINAPI MOXAudio2::CreateSourceVoice(IXAudio2SourceVoice ** ppSourceVoice, const WAVEFORMATEX * pSourceFormat, UINT32 Flags, float MaxFrequencyRatio, IXAudio2VoiceCallback *pCallback, const XAUDIO2_VOICE_SENDS *pSendList, const XAUDIO2_EFFECT_CHAIN *pEffectChain)
@@ -349,6 +370,7 @@ HRESULT WINAPI MOXAudio2::CreateSourceVoice(IXAudio2SourceVoice ** ppSourceVoice
 
 HRESULT WINAPI MOXAudio2::CreateSubmixVoice(IXAudio2SubmixVoice ** ppSubmixVoice, UINT32 InputChannels, UINT32 InputSampleRate, UINT32 Flags, UINT32 ProcessingStage, const XAUDIO2_VOICE_SENDS *pSendList, const XAUDIO2_EFFECT_CHAIN *pEffectChain)
 {
+	m_auxXA2->CreateSubmixVoice(ppSubmixVoice, InputChannels, InputSampleRate, Flags, ProcessingStage, pSendList, pEffectChain);
 	return m_mainXA2->CreateSubmixVoice(ppSubmixVoice, InputChannels, InputSampleRate, Flags, ProcessingStage, pSendList, pEffectChain);
 }
 
@@ -356,8 +378,9 @@ HRESULT WINAPI MOXAudio2::CreateMasteringVoice(IXAudio2MasteringVoice ** ppMaste
 {
 	IXAudio2MasteringVoice* mainVoice = nullptr;
 	IXAudio2MasteringVoice* auxVoice = nullptr;
-	HRESULT hrMain = m_mainXA2->CreateMasteringVoice(&mainVoice, InputChannels, InputSampleRate, Flags, szDeviceId, pEffectChain, StreamCategory);
+
 	m_auxXA2->CreateMasteringVoice(&auxVoice, InputChannels, InputSampleRate, Flags, GetCommunicationsDeviceString().c_str(), pEffectChain, StreamCategory);
+	HRESULT hrMain = m_mainXA2->CreateMasteringVoice(&mainVoice, InputChannels, InputSampleRate, Flags, szDeviceId, pEffectChain, StreamCategory);
 
 	// TODO: Manage this pointer
 	*ppMasteringVoice = new MOXAudio2MasteringVoice( mainVoice, auxVoice );
@@ -405,7 +428,7 @@ void WINAPI MOXAudio2::SetDebugConfiguration(const XAUDIO2_DEBUG_CONFIGURATION *
 	m_mainXA2->SetDebugConfiguration(pDebugConfiguration, pReserved);
 }
 
-// Inherited via IXAudio2SourceVoice
+
 
 HRESULT WINAPI MOXAudio2SourceVoice::Start(UINT32 Flags, UINT32 OperationSet)
 {
@@ -563,7 +586,7 @@ void MOXAudio2SourceVoice::DestroyVoice()
 }
 
 
-// Inherited via IXAudio2MasteringVoice
+
 
 HRESULT WINAPI MOXAudio2MasteringVoice::GetChannelMask(DWORD * pChannelmask)
 {
