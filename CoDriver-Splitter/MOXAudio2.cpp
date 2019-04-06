@@ -8,19 +8,12 @@
 #include <Shlwapi.h>
 #include <string>
 
-#include <wrl.h>
-#include <Mmdeviceapi.h>
-
 #include <vector>
 #include <algorithm>
 
+#include "MOXAudio2_Common.h"
+
 #pragma comment(lib, "shlwapi.lib")
-
-#define INITGUID
-#include <guiddef.h>
-DEFINE_GUID(DEVINTERFACE_AUDIO_RENDER, 0xe6327cad, 0xdcec, 0x4949, 0xae, 0x8a, 0x99, 0x1e, 0x97, 0x6a, 0x79, 0xd2);
-#undef INITGUID
-
 
 HMODULE hRealXAudio2;
 static void LoadRealXAudio2()
@@ -32,100 +25,6 @@ static void LoadRealXAudio2()
 	PathAppend(wcSystemPath, XAUDIO2_DLL);
 
 	hRealXAudio2 = LoadLibrary( wcSystemPath );
-}
-
-std::wstring GetCommunicationsDeviceString()
-{
-	using namespace Microsoft::WRL;
-	using namespace Microsoft::WRL::Wrappers;
-
-	std::wstring result;
-
-	HRESULT hrCom = CoInitializeEx( nullptr, COINIT_APARTMENTTHREADED );
-	
-	// Superfluous scope to ensure COM pointer deinits before CoUnitialize
-	{
-		ComPtr<IMMDeviceEnumerator> enumerator;
-
-		HRESULT hr = CoCreateInstance(
-			__uuidof(MMDeviceEnumerator), NULL,
-			CLSCTX_ALL, IID_PPV_ARGS(enumerator.GetAddressOf()) );
-		if ( SUCCEEDED(hr) )
-		{
-			ComPtr<IMMDevice> device;
-			hr = enumerator->GetDefaultAudioEndpoint( eRender, eCommunications, device.GetAddressOf() );
-			if ( SUCCEEDED(hr) )
-			{
-				LPWSTR strId = nullptr;
-				if ( SUCCEEDED( device->GetId( &strId ) ) )
-				{
-					// Sources:
-					// https://github.com/citizenfx/fivem/blob/e628cfa2e0a4e9e803de31af3c805e9baba57048/code/components/voip-mumble/src/MumbleAudioOutput.cpp#L710
-					// https://gist.github.com/mendsley/fbb495b292b95d35a014109e586d35dd
-					result.reserve(112);
-					result.append(L"\\\\?\\SWD#MMDEVAPI#");
-					result.append(strId);
-					result.push_back(L'#');
-					const size_t offset = result.size();
-
-					result.resize(result.capacity());
-					StringFromGUID2(DEVINTERFACE_AUDIO_RENDER, &result[offset], (int)(result.size() - offset));
-					CoTaskMemFree( strId );
-				}
-			}
-		}
-	}
-
-	if ( SUCCEEDED(hrCom) )
-	{
-		CoUninitialize();
-	}
-
-	return result;
-}
-
-void FixupMasteringVoiceChannelMask( DWORD* pChannelmask )
-{
-	// Fixup rules, backed by testing in DiRT Rally:
-	// - We need at least 4 speakers for the game to emit 5.1 audio
-	// - We will always add front left/right and center speakers, and additionally add side speakers if back speakers are not present
-	*pChannelmask |= SPEAKER_FRONT_LEFT|SPEAKER_FRONT_RIGHT|SPEAKER_FRONT_CENTER;
-	if ( (*pChannelmask & (SPEAKER_FRONT_LEFT_OF_CENTER|SPEAKER_FRONT_RIGHT_OF_CENTER | SPEAKER_BACK_LEFT|SPEAKER_BACK_RIGHT)) == 0 )
-	{
-		*pChannelmask |= SPEAKER_SIDE_LEFT|SPEAKER_SIDE_RIGHT;
-	}
-}
-
-DWORD PopCount( DWORD mask )
-{
-	DWORD count = 0;
-	DWORD testMask = 1;
-	for ( size_t i = 0; i < 32; i++ )
-	{
-		if ( (mask & testMask) != 0 )
-		{
-			count++;
-		}
-		testMask <<= 1;
-	}
-	return count;
-}
-
-void NormalizeOutputMatrix( std::vector<float>& levels, float volume )
-{
-	float max = *std::max_element( levels.begin(), levels.end() );	
-	if ( max != 0.0f )
-	{
-		// Make sure this will not make the most prominent channel quieter
-		max /= volume;
-		if ( max < 1.0f )
-		{
-			for ( auto& value : levels )
-			{
-				value /= max;
-			}
-		}
-	}
 }
 
 class MOXAudio2 final : public IXAudio2
@@ -324,9 +223,6 @@ HRESULT WINAPI MOXAudio2::CreateSourceVoice(IXAudio2SourceVoice ** ppSourceVoice
 	// Mute center speaker on output matrix
 	std::vector<float> levels;
 	const DWORD source = pSourceFormat->nChannels;
-	auto getOutput = [&]( size_t src, size_t dest ) -> float& {
-		return levels[ source * dest + src ];
-	};
 
 
 	{
@@ -334,17 +230,7 @@ HRESULT WINAPI MOXAudio2::CreateSourceVoice(IXAudio2SourceVoice ** ppSourceVoice
 		levels.resize( source * destination );
 
 		mainVoice->GetOutputMatrix( nullptr, source, destination, levels.data() );
-
-		for ( DWORD i = 0; i < destination; i++ )
-		{
-			getOutput( 2, i ) = 0.0f;
-		}
-		// If downmixing, give environment a volume boost by normalizing channels
-		if ( source > destination )
-		{
-			NormalizeOutputMatrix( levels, 0.5f );
-		}
-
+		SetOutputMatrixForMain( source, destination, levels );
 		result = mainVoice->SetOutputMatrix( nullptr, source, destination, levels.data() );
 	}
 
@@ -353,22 +239,7 @@ HRESULT WINAPI MOXAudio2::CreateSourceVoice(IXAudio2SourceVoice ** ppSourceVoice
 		levels.resize( source * destination );
 
 		auxVoice->GetOutputMatrix( nullptr, source, destination, levels.data() );
-		for ( DWORD i = 0; i < destination; i++ )
-		{
-			for ( DWORD j = 0; j < source; j++ )
-			{
-				if ( j != 2 )
-				{
-					getOutput( j, i ) = 0.0f;
-				}
-			}
-		}
-		// We want the co-driver to be easily audible - if downmixing, give it a volume boost by normalizing channels
-		if ( source > destination )
-		{
-			NormalizeOutputMatrix( levels, 0.75f );
-		}
-
+		SetOutputMatrixForAuxillary( source, destination, levels );
 		result = auxVoice->SetOutputMatrix( nullptr, source, destination, levels.data() );
 	}
 

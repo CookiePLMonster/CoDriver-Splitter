@@ -18,5 +18,13 @@
     <ClCompile Include="MOXAudio2.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="MOXAudio2_Common.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="MOXAudio2_Common.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>
