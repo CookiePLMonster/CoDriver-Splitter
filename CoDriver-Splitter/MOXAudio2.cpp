@@ -11,7 +11,7 @@
 #include <wrl.h>
 #include <Mmdeviceapi.h>
 
-#include <array>
+#include <vector>
 
 #pragma comment(lib, "shlwapi.lib")
 
@@ -85,6 +85,21 @@ void FixupMasteringVoiceChannelMask( DWORD* pChannelmask )
 	}
 }
 
+DWORD PopCount( DWORD mask )
+{
+	DWORD count = 0;
+	DWORD testMask = 1;
+	for ( size_t i = 0; i < 32; i++ )
+	{
+		if ( (mask & testMask) != 0 )
+		{
+			count++;
+		}
+		testMask <<= 1;
+	}
+	return count;
+}
+
 class MOXAudio2 final : public IXAudio2
 {
 public:
@@ -112,6 +127,9 @@ private:
 	IXAudio2*	m_mainXA2;
 	IXAudio2*	m_auxXA2;
 	LONG		m_ref = 1;
+
+	DWORD		m_mainNumChannels = 0;
+	DWORD		m_auxNumChannels = 0;
 };
 
 class MOXAudio2MasteringVoice final : public IXAudio2MasteringVoice
@@ -258,28 +276,44 @@ inline HRESULT __stdcall MOXAudio2::CreateSourceVoice(IXAudio2SourceVoice ** ppS
 	*ppSourceVoice = new MOXAudio2SourceVoice( mainVoice, auxVoice );
 
 	// Mute center speaker on output matrix
-	const size_t source = 6;
-	const size_t destination = 2;
-	std::array<float, source * destination> levels = {};
+	std::vector<float> levels;
+	const DWORD source = pSourceFormat->nChannels;
 	auto getOutput = [&]( size_t src, size_t dest ) -> float& {
 		return levels[ source * dest + src ];
 	};
 
-	mainVoice->GetOutputMatrix( nullptr, source, destination, levels.data() );
 
-	for ( size_t i = 0; i < destination; i++ )
 	{
-		getOutput( 2, i ) = 0.0f;
+		const DWORD destination = m_mainNumChannels;
+		levels.resize( source * destination );
+
+		mainVoice->GetOutputMatrix( nullptr, source, destination, levels.data() );
+
+		for ( DWORD i = 0; i < destination; i++ )
+		{
+			getOutput( 2, i ) = 0.0f;
+		}
+
+		result = mainVoice->SetOutputMatrix( nullptr, source, destination, levels.data() );
 	}
 
-	mainVoice->SetOutputMatrix( nullptr, source, destination, levels.data() );
-
-	levels.fill( 0.0f );
-	for ( size_t i = 0; i < destination; i++ )
 	{
-		getOutput( 2, i ) = 1.0f;
+		const DWORD destination = m_auxNumChannels;
+		levels.resize( source * destination );
+
+		auxVoice->GetOutputMatrix( nullptr, source, destination, levels.data() );
+		for ( DWORD i = 0; i < destination; i++ )
+		{
+			for ( DWORD j = 0; j < source; j++ )
+			{
+				if ( j != 2 )
+				{
+					getOutput( j, i ) = 0.0f;
+				}
+			}
+		}
+		result = auxVoice->SetOutputMatrix( nullptr, source, destination, levels.data() );
 	}
-	auxVoice->SetOutputMatrix( nullptr, source, destination, levels.data() );
 
 	return result;
 }
@@ -298,6 +332,16 @@ inline HRESULT __stdcall MOXAudio2::CreateMasteringVoice(IXAudio2MasteringVoice 
 
 	// TODO: Manage this pointer
 	*ppMasteringVoice = new MOXAudio2MasteringVoice( mainVoice, auxVoice );
+
+	DWORD mask;
+	if ( SUCCEEDED( mainVoice->GetChannelMask( &mask ) ) )
+	{
+		m_mainNumChannels = PopCount( mask );
+	}
+	if ( SUCCEEDED( auxVoice->GetChannelMask( &mask ) ) )
+	{
+		m_auxNumChannels = PopCount( mask );
+	}
 
 	return hrMain;
 }
