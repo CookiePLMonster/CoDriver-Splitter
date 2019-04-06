@@ -191,7 +191,6 @@ public:
 private:
 	IXAudio2MasteringVoice* m_mainVoice;
 	IXAudio2MasteringVoice* m_auxVoice;
-	LONG m_ref = 1;
 };
 
 class MOXAudio2SourceVoice final : public IXAudio2SourceVoice
@@ -625,90 +624,116 @@ HRESULT WINAPI MOXAudio2MasteringVoice::GetChannelMask(DWORD * pChannelmask)
 
 void WINAPI MOXAudio2MasteringVoice::GetVoiceDetails(XAUDIO2_VOICE_DETAILS * pVoiceDetails)
 {
-	// TODO
+	// No need to call this on auxillary voice
 	m_mainVoice->GetVoiceDetails( pVoiceDetails );
 }
 
 HRESULT WINAPI MOXAudio2MasteringVoice::SetOutputVoices(const XAUDIO2_VOICE_SENDS * pSendList)
 {
-	// TODO
+	m_auxVoice->SetOutputVoices(pSendList);
 	return m_mainVoice->SetOutputVoices(pSendList);
 }
 
 HRESULT WINAPI MOXAudio2MasteringVoice::SetEffectChain(const XAUDIO2_EFFECT_CHAIN * pEffectChain)
 {
+	m_auxVoice->SetEffectChain(pEffectChain);
 	return m_mainVoice->SetEffectChain(pEffectChain);
 }
 
 HRESULT WINAPI MOXAudio2MasteringVoice::EnableEffect(UINT32 EffectIndex, UINT32 OperationSet)
 {
+	m_auxVoice->EnableEffect(EffectIndex, OperationSet);
 	return m_mainVoice->EnableEffect(EffectIndex, OperationSet);
 }
 
 HRESULT WINAPI MOXAudio2MasteringVoice::DisableEffect(UINT32 EffectIndex, UINT32 OperationSet)
 {
-	return E_NOTIMPL;
+	m_auxVoice->DisableEffect(EffectIndex, OperationSet);
+	return m_mainVoice->DisableEffect(EffectIndex, OperationSet);
 }
 
 void WINAPI MOXAudio2MasteringVoice::GetEffectState(UINT32 EffectIndex, BOOL * pEnabled)
 {
+	// No need to call this on auxillary voice
+	m_mainVoice->GetEffectState(EffectIndex, pEnabled);
 }
 
 HRESULT WINAPI MOXAudio2MasteringVoice::SetEffectParameters(UINT32 EffectIndex, const void * pParameters, UINT32 ParametersByteSize, UINT32 OperationSet)
 {
-	return E_NOTIMPL;
+	m_auxVoice->SetEffectParameters(EffectIndex, pParameters, ParametersByteSize, OperationSet);
+	return m_mainVoice->SetEffectParameters(EffectIndex, pParameters, ParametersByteSize, OperationSet);
 }
 
 HRESULT WINAPI MOXAudio2MasteringVoice::GetEffectParameters(UINT32 EffectIndex, void * pParameters, UINT32 ParametersByteSize)
 {
-	return E_NOTIMPL;
+	// No need to call this on auxillary voice
+	return m_mainVoice->GetEffectParameters(EffectIndex, pParameters, ParametersByteSize);
 }
 
 HRESULT WINAPI MOXAudio2MasteringVoice::SetFilterParameters(const XAUDIO2_FILTER_PARAMETERS * pParameters, UINT32 OperationSet)
 {
-	return E_NOTIMPL;
+	m_auxVoice->SetFilterParameters(pParameters, OperationSet);
+	return m_mainVoice->SetFilterParameters(pParameters, OperationSet);
 }
 
 void WINAPI MOXAudio2MasteringVoice::GetFilterParameters(XAUDIO2_FILTER_PARAMETERS * pParameters)
 {
+	// No need to call this on auxillary voice 
+	m_mainVoice->GetFilterParameters(pParameters);
 }
 
 HRESULT WINAPI MOXAudio2MasteringVoice::SetOutputFilterParameters(IXAudio2Voice * pDestinationVoice, const XAUDIO2_FILTER_PARAMETERS * pParameters, UINT32 OperationSet)
 {
-	return E_NOTIMPL;
+	m_auxVoice->SetOutputFilterParameters(pDestinationVoice, pParameters, OperationSet);
+	return m_mainVoice->SetOutputFilterParameters(pDestinationVoice, pParameters, OperationSet);
 }
 
 void WINAPI MOXAudio2MasteringVoice::GetOutputFilterParameters(IXAudio2Voice * pDestinationVoice, XAUDIO2_FILTER_PARAMETERS * pParameters)
 {
+	// No need to call this on auxillary voice
+	m_mainVoice->GetOutputFilterParameters(pDestinationVoice, pParameters);
 }
 
 HRESULT WINAPI MOXAudio2MasteringVoice::SetVolume(float Volume, UINT32 OperationSet)
 {
+	m_auxVoice->SetVolume(Volume, OperationSet);
 	return m_mainVoice->SetVolume(Volume, OperationSet);
 }
 
 void WINAPI MOXAudio2MasteringVoice::GetVolume(float * pVolume)
 {
+	// No need to call this on auxillary voice
+	m_mainVoice->GetVolume(pVolume);
 }
 
 HRESULT WINAPI MOXAudio2MasteringVoice::SetChannelVolumes(UINT32 Channels, const float * pVolumes, UINT32 OperationSet)
 {
-	return E_NOTIMPL;
+	m_auxVoice->SetChannelVolumes(Channels, pVolumes, OperationSet);
+	return m_mainVoice->SetChannelVolumes(Channels, pVolumes, OperationSet);
 }
 
 void WINAPI MOXAudio2MasteringVoice::GetChannelVolumes(UINT32 Channels, float * pVolumes)
 {
+	// No need to call this on auxillary voice
+	m_mainVoice->GetChannelVolumes(Channels, pVolumes);
 }
 
 HRESULT WINAPI MOXAudio2MasteringVoice::SetOutputMatrix(IXAudio2Voice * pDestinationVoice, UINT32 SourceChannels, UINT32 DestinationChannels, const float * pLevelMatrix, UINT32 OperationSet)
 {
-	return E_NOTIMPL;
+	m_auxVoice->SetOutputMatrix(pDestinationVoice, SourceChannels, DestinationChannels, pLevelMatrix, OperationSet);
+	return m_mainVoice->SetOutputMatrix(pDestinationVoice, SourceChannels, DestinationChannels, pLevelMatrix, OperationSet);
 }
 
 void WINAPI MOXAudio2MasteringVoice::GetOutputMatrix(IXAudio2Voice * pDestinationVoice, UINT32 SourceChannels, UINT32 DestinationChannels, float * pLevelMatrix)
 {
+	// No need to call this on auxillary voice
+	m_mainVoice->GetOutputMatrix(pDestinationVoice, SourceChannels, DestinationChannels, pLevelMatrix);
 }
 
 void WINAPI MOXAudio2MasteringVoice::DestroyVoice()
 {
+	m_auxVoice->DestroyVoice();
+	m_mainVoice->DestroyVoice();
+
+	delete this;
 }
