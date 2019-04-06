@@ -1,31 +1,26 @@
 #define WIN32_LEAN_AND_MEAN
 #define NOMINMAX
-#define WINVER 0x0A00
-#define _WIN32_WINNT 0x0A00
+#define WINVER 0x0602
+#define _WIN32_WINNT 0x0602
 #include <Windows.h>
+#include <wrl.h>
 
 #include <xaudio2.h>
-#include <Shlwapi.h>
 #include <string>
 
 #include <vector>
 #include <algorithm>
 
 #include "MOXAudio2_Common.h"
+#include "MOXAudio2_Hooks.h"
 
-#pragma comment(lib, "shlwapi.lib")
+#include <initguid.h>
 
-HMODULE hRealXAudio2;
-static void LoadRealXAudio2()
-{
-	if ( hRealXAudio2 != nullptr ) return;
+// {6CE3D7FC-ED78-4256-BCAF-1088C153C9EA}
+DEFINE_GUID(IID_MOXAudio2, 
+	0x6ce3d7fc, 0xed78, 0x4256, 0xbc, 0xaf, 0x10, 0x88, 0xc1, 0x53, 0xc9, 0xea);
 
-	TCHAR		wcSystemPath[MAX_PATH];
-	GetSystemDirectory(wcSystemPath, MAX_PATH);
-	PathAppend(wcSystemPath, XAUDIO2_DLL);
-
-	hRealXAudio2 = LoadLibrary( wcSystemPath );
-}
+class __declspec(uuid("6CE3D7FC-ED78-4256-BCAF-1088C153C9EA")) MOXAudio2;
 
 class MOXAudio2 final : public IXAudio2
 {
@@ -48,8 +43,6 @@ public:
 	MOXAudio2( IXAudio2* main, IXAudio2* aux )
 		: m_mainXA2( main ), m_auxXA2( aux )
 	{
-		m_mainXA2->AddRef();
-		m_auxXA2->AddRef();
 	}
 
 	~MOXAudio2()
@@ -147,33 +140,13 @@ private:
 	IXAudio2SourceVoice* m_auxVoice;
 };
 
-extern "C"
-{
-
-__declspec(dllexport) HRESULT WINAPI MOXAudio2Create( IXAudio2 **ppXAudio2, UINT32 Flags, XAUDIO2_PROCESSOR XAudio2Processor )
-{
-	LoadRealXAudio2();
-
-	auto createFn = (HRESULT(WINAPI*)(IXAudio2**, UINT32, XAUDIO2_PROCESSOR ))GetProcAddress( hRealXAudio2, "XAudio2Create" );
-
-	IXAudio2* mainDevice = nullptr;
-	IXAudio2* auxDevice = nullptr;
-	HRESULT result1 = createFn( &mainDevice, Flags, XAudio2Processor );
-	HRESULT result2 = createFn( &auxDevice, Flags, XAudio2Processor );
-
-	*ppXAudio2 = new MOXAudio2( mainDevice, auxDevice );
-	return result1;
-}
-
-}
-
-
 
 HRESULT WINAPI MOXAudio2::QueryInterface(REFIID riid, void ** ppvInterface)
 {
 	if ( ppvInterface == nullptr ) return E_POINTER;
 
-	if ( riid == IID_IUnknown || riid == __uuidof(IXAudio2) )
+	if ( riid == IID_IUnknown || riid == __uuidof(IXAudio2) 
+		|| riid == IID_MOXAudio2 ) // Custom extension so wrappers are "self aware"
 	{
 		*ppvInterface = static_cast<IXAudio2*>(this);
 		AddRef();
@@ -625,4 +598,46 @@ void WINAPI MOXAudio2MasteringVoice::DestroyVoice()
 	m_mainVoice->DestroyVoice();
 
 	delete this;
+}
+
+
+HRESULT WINAPI MOXAudio2Create( IXAudio2 **ppXAudio2, UINT32 Flags, XAUDIO2_PROCESSOR XAudio2Processor )
+{
+	HMODULE realXAudio2 = LoadRealXAudio2();
+
+	auto createFn = (HRESULT(WINAPI*)(IXAudio2**, UINT32, XAUDIO2_PROCESSOR ))GetProcAddress( realXAudio2, "XAudio2Create" );
+
+	using namespace Microsoft::WRL;
+	using namespace Microsoft::WRL::Wrappers;
+
+	ComPtr<IXAudio2> mainDevice;
+	HRESULT hrMain = createFn( mainDevice.GetAddressOf(), Flags, XAudio2Processor );
+	if ( SUCCEEDED(hrMain) )
+	{
+		// In DiRT Rally on Windows 10, it is possible that "real" XAudio2 is in fact our own XAudio2.9
+		// Try to detect this case and if it's really happening, don't wrap the APIs again
+
+		ComPtr<MOXAudio2> maybeMOXAudio2;
+		if ( SUCCEEDED( mainDevice.As( &maybeMOXAudio2 ) ) )
+		{
+			*ppXAudio2 = maybeMOXAudio2.Detach();
+			return S_OK;
+		}
+	}
+
+	ComPtr<IXAudio2> auxDevice = nullptr;
+	HRESULT hrAux = createFn( auxDevice.GetAddressOf(), Flags, XAudio2Processor );
+	if ( SUCCEEDED(hrAux) )
+	{
+		*ppXAudio2 = new MOXAudio2( mainDevice.Detach(), auxDevice.Detach() );
+	}
+	return hrAux;
+}
+
+extern "C"
+{
+	__declspec(dllexport) HRESULT WINAPI XAudio2Create_Hooked( IXAudio2 **ppXAudio2, UINT32 Flags, XAUDIO2_PROCESSOR XAudio2Processor )
+	{
+		return MOXAudio2Create( ppXAudio2, Flags, XAudio2Processor );
+	}
 }

@@ -1,2 +1,2 @@
 EXPORTS
-	XAudio2Create=MOXAudio2Create
+	XAudio2Create=XAudio2Create_Hooked
