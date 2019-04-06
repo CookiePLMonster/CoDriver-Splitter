@@ -309,7 +309,6 @@ HRESULT WINAPI MOXAudio2::CreateSourceVoice(IXAudio2SourceVoice ** ppSourceVoice
 	HRESULT result = m_mainXA2->CreateSourceVoice(&mainVoice, pSourceFormat, Flags, MaxFrequencyRatio, pCallback, pSendList, pEffectChain);
 	m_auxXA2->CreateSourceVoice(&auxVoice, pSourceFormat, Flags, MaxFrequencyRatio, nullptr, pSendList, pEffectChain);
 
-	// TODO: Manage this pointer
 	*ppSourceVoice = new MOXAudio2SourceVoice( mainVoice, auxVoice );
 
 	// Mute center speaker on output matrix
@@ -390,7 +389,6 @@ HRESULT WINAPI MOXAudio2::CreateMasteringVoice(IXAudio2MasteringVoice ** ppMaste
 		return hrMain;
 	}
 
-	// TODO: Manage this pointer
 	*ppMasteringVoice = new MOXAudio2MasteringVoice( mainVoice, auxVoice );
 
 	DWORD mask;
