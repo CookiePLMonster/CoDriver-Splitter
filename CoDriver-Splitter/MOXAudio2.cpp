@@ -12,6 +12,7 @@
 #include <Mmdeviceapi.h>
 
 #include <vector>
+#include <algorithm>
 
 #pragma comment(lib, "shlwapi.lib")
 
@@ -98,6 +99,23 @@ DWORD PopCount( DWORD mask )
 		testMask <<= 1;
 	}
 	return count;
+}
+
+void NormalizeOutputMatrix( std::vector<float>& levels, float volume )
+{
+	float max = *std::max_element( levels.begin(), levels.end() );	
+	if ( max != 0.0f )
+	{
+		// Make sure this will not make the most prominent channel quieter
+		max /= volume;
+		if ( max < 1.0f )
+		{
+			for ( auto& value : levels )
+			{
+				value /= max;
+			}
+		}
+	}
 }
 
 class MOXAudio2 final : public IXAudio2
@@ -293,6 +311,11 @@ inline HRESULT __stdcall MOXAudio2::CreateSourceVoice(IXAudio2SourceVoice ** ppS
 		{
 			getOutput( 2, i ) = 0.0f;
 		}
+		// If downmixing, give environment a volume boost by normalizing channels
+		if ( source > destination )
+		{
+			NormalizeOutputMatrix( levels, 0.5f );
+		}
 
 		result = mainVoice->SetOutputMatrix( nullptr, source, destination, levels.data() );
 	}
@@ -312,6 +335,12 @@ inline HRESULT __stdcall MOXAudio2::CreateSourceVoice(IXAudio2SourceVoice ** ppS
 				}
 			}
 		}
+		// We want the co-driver to be easily audible - if downmixing, give it a volume boost by normalizing channels
+		if ( source > destination )
+		{
+			NormalizeOutputMatrix( levels, 0.75f );
+		}
+
 		result = auxVoice->SetOutputMatrix( nullptr, source, destination, levels.data() );
 	}
 
