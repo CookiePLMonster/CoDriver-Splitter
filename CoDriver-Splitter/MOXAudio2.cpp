@@ -237,7 +237,6 @@ public:
 private:
 	IXAudio2SourceVoice* m_mainVoice;
 	IXAudio2SourceVoice* m_auxVoice;
-	LONG m_ref = 1;
 };
 
 extern "C"
@@ -462,90 +461,107 @@ HRESULT WINAPI MOXAudio2SourceVoice::Discontinuity(void)
 
 HRESULT WINAPI MOXAudio2SourceVoice::ExitLoop(UINT32 OperationSet)
 {
-	// TODO
+	m_auxVoice->ExitLoop(OperationSet);
 	return m_mainVoice->ExitLoop(OperationSet);
 }
 
 void WINAPI MOXAudio2SourceVoice::GetState(XAUDIO2_VOICE_STATE * pVoiceState, UINT32 Flags)
 {
-	// TODO
+	// No need to call this on auxillary voice
 	m_mainVoice->GetState(pVoiceState, Flags);
 }
 
 HRESULT WINAPI MOXAudio2SourceVoice::SetFrequencyRatio(float Ratio, UINT32 OperationSet)
 {
-	// TODO
+	m_auxVoice->SetFrequencyRatio(Ratio, OperationSet);
 	return m_mainVoice->SetFrequencyRatio(Ratio, OperationSet);
 }
 
 void WINAPI MOXAudio2SourceVoice::GetFrequencyRatio(float * pRatio)
 {
-	// TODO
+	// No need to call this on auxillary voice
 	m_mainVoice->GetFrequencyRatio(pRatio);
 }
 
 HRESULT WINAPI MOXAudio2SourceVoice::SetSourceSampleRate(UINT32 NewSourceSampleRate)
 {
-	// TODO
+	m_auxVoice->SetSourceSampleRate(NewSourceSampleRate);
 	return m_mainVoice->SetSourceSampleRate(NewSourceSampleRate);
 }
 
 void MOXAudio2SourceVoice::GetVoiceDetails(XAUDIO2_VOICE_DETAILS * pVoiceDetails)
 {
-	// TODO
+	// No need to call this on auxillary voice
 	m_mainVoice->GetVoiceDetails(pVoiceDetails);
 }
 
 HRESULT MOXAudio2SourceVoice::SetOutputVoices(const XAUDIO2_VOICE_SENDS * pSendList)
 {
-	return E_NOTIMPL;
+	// TODO: Translate the sends list (use RTTI to determine whether it's submix or mastering maybe?)
+	m_auxVoice->SetOutputVoices(pSendList);
+	return m_mainVoice->SetOutputVoices(pSendList);
 }
 
 HRESULT MOXAudio2SourceVoice::SetEffectChain(const XAUDIO2_EFFECT_CHAIN * pEffectChain)
 {
-	return E_NOTIMPL;
+	m_auxVoice->SetEffectChain(pEffectChain);
+	return m_mainVoice->SetEffectChain(pEffectChain);
 }
 
 HRESULT MOXAudio2SourceVoice::EnableEffect(UINT32 EffectIndex, UINT32 OperationSet)
 {
-	return E_NOTIMPL;
+	m_auxVoice->EnableEffect(EffectIndex, OperationSet);
+	return m_mainVoice->EnableEffect(EffectIndex, OperationSet);
 }
 
 HRESULT MOXAudio2SourceVoice::DisableEffect(UINT32 EffectIndex, UINT32 OperationSet)
 {
-	return E_NOTIMPL;
+	m_auxVoice->DisableEffect(EffectIndex, OperationSet);
+	return m_mainVoice->DisableEffect(EffectIndex, OperationSet);
 }
 
 void MOXAudio2SourceVoice::GetEffectState(UINT32 EffectIndex, BOOL * pEnabled)
 {
+	// No need to call this on auxillary voice
+	m_mainVoice->GetEffectState(EffectIndex, pEnabled);
 }
 
 HRESULT MOXAudio2SourceVoice::SetEffectParameters(UINT32 EffectIndex, const void * pParameters, UINT32 ParametersByteSize, UINT32 OperationSet)
 {
-	return E_NOTIMPL;
+	m_auxVoice->SetEffectParameters(EffectIndex, pParameters, ParametersByteSize, OperationSet);
+	return m_mainVoice->SetEffectParameters(EffectIndex, pParameters, ParametersByteSize, OperationSet);
 }
 
 HRESULT MOXAudio2SourceVoice::GetEffectParameters(UINT32 EffectIndex, void * pParameters, UINT32 ParametersByteSize)
 {
-	return E_NOTIMPL;
+	// No need to call this on auxillary voice
+	return m_mainVoice->GetEffectParameters(EffectIndex, pParameters, ParametersByteSize);
 }
 
 HRESULT MOXAudio2SourceVoice::SetFilterParameters(const XAUDIO2_FILTER_PARAMETERS * pParameters, UINT32 OperationSet)
 {
-	return E_NOTIMPL;
+	m_auxVoice->SetFilterParameters(pParameters, OperationSet);
+	return m_mainVoice->SetFilterParameters(pParameters, OperationSet);
 }
 
 void MOXAudio2SourceVoice::GetFilterParameters(XAUDIO2_FILTER_PARAMETERS * pParameters)
 {
+	// No need to call this on auxillary voice 
+	m_mainVoice->GetFilterParameters(pParameters);
 }
 
 HRESULT MOXAudio2SourceVoice::SetOutputFilterParameters(IXAudio2Voice * pDestinationVoice, const XAUDIO2_FILTER_PARAMETERS * pParameters, UINT32 OperationSet)
 {
-	return E_NOTIMPL;
+	// TODO: Handle IXAudio2Voice properly (use RTTI to determine whether it's submix or mastering maybe?)
+	m_auxVoice->SetOutputFilterParameters(pDestinationVoice, pParameters, OperationSet);
+	return m_mainVoice->SetOutputFilterParameters(pDestinationVoice, pParameters, OperationSet);
 }
 
 void MOXAudio2SourceVoice::GetOutputFilterParameters(IXAudio2Voice * pDestinationVoice, XAUDIO2_FILTER_PARAMETERS * pParameters)
 {
+	// No need to call this on auxillary voice
+	// TODO: Handle IXAudio2Voice properly (use RTTI to determine whether it's submix or mastering maybe?)
+	m_mainVoice->GetOutputFilterParameters(pDestinationVoice, pParameters);
 }
 
 HRESULT MOXAudio2SourceVoice::SetVolume(float Volume, UINT32 OperationSet)
@@ -556,33 +572,42 @@ HRESULT MOXAudio2SourceVoice::SetVolume(float Volume, UINT32 OperationSet)
 
 void MOXAudio2SourceVoice::GetVolume(float * pVolume)
 {
-	// TODO
+	// No need to call this on auxillary voice
 	m_mainVoice->GetVolume(pVolume);
 }
 
 HRESULT MOXAudio2SourceVoice::SetChannelVolumes(UINT32 Channels, const float * pVolumes, UINT32 OperationSet)
 {
-	return E_NOTIMPL;
+	m_auxVoice->SetChannelVolumes(Channels, pVolumes, OperationSet);
+	return m_mainVoice->SetChannelVolumes(Channels, pVolumes, OperationSet);
 }
 
 void MOXAudio2SourceVoice::GetChannelVolumes(UINT32 Channels, float * pVolumes)
 {
+	// No need to call this on auxillary voice
+	m_mainVoice->GetChannelVolumes(Channels, pVolumes);
 }
 
 HRESULT MOXAudio2SourceVoice::SetOutputMatrix(IXAudio2Voice * pDestinationVoice, UINT32 SourceChannels, UINT32 DestinationChannels, const float * pLevelMatrix, UINT32 OperationSet)
 {
-	return E_NOTIMPL;
+	// TODO: Apply same modifications to output matrix here as in CreateSourceVoice
+	// TODO: Handle IXAudio2Voice properly (use RTTI to determine whether it's submix or mastering maybe?)
+	m_auxVoice->SetOutputMatrix(pDestinationVoice, SourceChannels, DestinationChannels, pLevelMatrix, OperationSet);
+	return m_mainVoice->SetOutputMatrix(pDestinationVoice, SourceChannels, DestinationChannels, pLevelMatrix, OperationSet);
 }
 
 void MOXAudio2SourceVoice::GetOutputMatrix(IXAudio2Voice * pDestinationVoice, UINT32 SourceChannels, UINT32 DestinationChannels, float * pLevelMatrix)
 {
+	// No need to call this on auxillary voice
+	m_mainVoice->GetOutputMatrix(pDestinationVoice, SourceChannels, DestinationChannels, pLevelMatrix);
 }
 
 void MOXAudio2SourceVoice::DestroyVoice()
 {
-	// TODO
 	m_auxVoice->DestroyVoice();
 	m_mainVoice->DestroyVoice();
+
+	delete this;
 }
 
 
