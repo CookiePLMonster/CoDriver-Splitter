@@ -127,8 +127,8 @@ public:
 	virtual ULONG WINAPI Release(void) override;
 	virtual HRESULT WINAPI RegisterForCallbacks(IXAudio2EngineCallback * pCallback) override;
 	virtual void WINAPI UnregisterForCallbacks(IXAudio2EngineCallback * pCallback) override;
-	virtual HRESULT WINAPI CreateSourceVoice(IXAudio2SourceVoice ** ppSourceVoice, const WAVEFORMATEX * pSourceFormat, UINT32 Flags X2DEFAULT(0), float MaxFrequencyRatio X2DEFAULT(XAUDIO2_DEFAULT_FREQ_RATIO), IXAudio2VoiceCallback *pCallback X2DEFAULT(NULL), const XAUDIO2_VOICE_SENDS *pSendList X2DEFAULT(NULL), const XAUDIO2_EFFECT_CHAIN *pEffectChain X2DEFAULT(NULL)) override;
-	virtual HRESULT WINAPI CreateSubmixVoice(IXAudio2SubmixVoice ** ppSubmixVoice, UINT32 InputChannels, UINT32 InputSampleRate, UINT32 Flags X2DEFAULT(0), UINT32 ProcessingStage X2DEFAULT(0), const XAUDIO2_VOICE_SENDS *pSendList X2DEFAULT(NULL), const XAUDIO2_EFFECT_CHAIN *pEffectChain X2DEFAULT(NULL)) override;
+	virtual HRESULT WINAPI CreateSourceVoice(IXAudio2SourceVoice ** ppSourceVoice, const WAVEFORMATEX * pSourceFormat, UINT32 Flags, float MaxFrequencyRatio, IXAudio2VoiceCallback *pCallback, const XAUDIO2_VOICE_SENDS *pSendList, const XAUDIO2_EFFECT_CHAIN *pEffectChain) override;
+	virtual HRESULT WINAPI CreateSubmixVoice(IXAudio2SubmixVoice ** ppSubmixVoice, UINT32 InputChannels, UINT32 InputSampleRate, UINT32 Flags, UINT32 ProcessingStage, const XAUDIO2_VOICE_SENDS *pSendList, const XAUDIO2_EFFECT_CHAIN *pEffectChain) override;
 	virtual HRESULT WINAPI CreateMasteringVoice(IXAudio2MasteringVoice ** ppMasteringVoice, UINT32 InputChannels, UINT32 InputSampleRate, UINT32 Flags, LPCWSTR szDeviceId, const XAUDIO2_EFFECT_CHAIN *pEffectChain, AUDIO_STREAM_CATEGORY StreamCategory) override;
 	virtual HRESULT WINAPI StartEngine(void) override;
 	virtual void WINAPI StopEngine(void) override;
@@ -158,20 +158,20 @@ public:
 	virtual void WINAPI GetVoiceDetails(XAUDIO2_VOICE_DETAILS *pVoiceDetails);
 	virtual HRESULT WINAPI SetOutputVoices(const XAUDIO2_VOICE_SENDS *pSendList);
 	virtual HRESULT WINAPI SetEffectChain(const XAUDIO2_EFFECT_CHAIN *pEffectChain);
-	virtual HRESULT WINAPI EnableEffect(UINT32 EffectIndex, UINT32 OperationSet = 0U);
-	virtual HRESULT WINAPI DisableEffect(UINT32 EffectIndex, UINT32 OperationSet = 0U);
+	virtual HRESULT WINAPI EnableEffect(UINT32 EffectIndex, UINT32 OperationSet);
+	virtual HRESULT WINAPI DisableEffect(UINT32 EffectIndex, UINT32 OperationSet);
 	virtual void WINAPI GetEffectState(UINT32 EffectIndex, BOOL *pEnabled);
-	virtual HRESULT WINAPI SetEffectParameters(UINT32 EffectIndex, const void *pParameters, UINT32 ParametersByteSize, UINT32 OperationSet = 0U);
+	virtual HRESULT WINAPI SetEffectParameters(UINT32 EffectIndex, const void *pParameters, UINT32 ParametersByteSize, UINT32 OperationSet);
 	virtual HRESULT WINAPI GetEffectParameters(UINT32 EffectIndex, void *pParameters, UINT32 ParametersByteSize);
-	virtual HRESULT WINAPI SetFilterParameters(const XAUDIO2_FILTER_PARAMETERS *pParameters, UINT32 OperationSet = 0U);
+	virtual HRESULT WINAPI SetFilterParameters(const XAUDIO2_FILTER_PARAMETERS *pParameters, UINT32 OperationSet);
 	virtual void WINAPI GetFilterParameters(XAUDIO2_FILTER_PARAMETERS *pParameters);
-	virtual HRESULT WINAPI SetOutputFilterParameters(IXAudio2Voice *pDestinationVoice, const XAUDIO2_FILTER_PARAMETERS *pParameters, UINT32 OperationSet = 0U);
+	virtual HRESULT WINAPI SetOutputFilterParameters(IXAudio2Voice *pDestinationVoice, const XAUDIO2_FILTER_PARAMETERS *pParameters, UINT32 OperationSet);
 	virtual void WINAPI GetOutputFilterParameters(IXAudio2Voice *pDestinationVoice, XAUDIO2_FILTER_PARAMETERS *pParameters);
-	virtual HRESULT WINAPI SetVolume(float Volume, UINT32 OperationSet = 0U);
+	virtual HRESULT WINAPI SetVolume(float Volume, UINT32 OperationSet);
 	virtual void WINAPI GetVolume(float *pVolume);
-	virtual HRESULT WINAPI SetChannelVolumes(UINT32 Channels, const float *pVolumes, UINT32 OperationSet = 0U);
+	virtual HRESULT WINAPI SetChannelVolumes(UINT32 Channels, const float *pVolumes, UINT32 OperationSet);
 	virtual void WINAPI GetChannelVolumes(UINT32 Channels, float *pVolumes);
-	virtual HRESULT WINAPI SetOutputMatrix(IXAudio2Voice *pDestinationVoice, UINT32 SourceChannels, UINT32 DestinationChannels, const float *pLevelMatrix, UINT32 OperationSet = 0U);
+	virtual HRESULT WINAPI SetOutputMatrix(IXAudio2Voice *pDestinationVoice, UINT32 SourceChannels, UINT32 DestinationChannels, const float *pLevelMatrix, UINT32 OperationSet);
 	virtual void WINAPI GetOutputMatrix(IXAudio2Voice *pDestinationVoice, UINT32 SourceChannels, UINT32 DestinationChannels, float *pLevelMatrix);
 	virtual void WINAPI DestroyVoice();
 
@@ -254,36 +254,36 @@ __declspec(dllexport) HRESULT WINAPI MOXAudio2Create( IXAudio2 **ppXAudio2, UINT
 
 // Inherited via IXAudio2
 
-inline HRESULT __stdcall MOXAudio2::QueryInterface(REFIID riid, void ** ppvInterface)
+HRESULT WINAPI MOXAudio2::QueryInterface(REFIID riid, void ** ppvInterface)
 {
 	*ppvInterface = this;
 	return S_OK;
 }
 
-inline ULONG __stdcall MOXAudio2::AddRef(void)
+ULONG WINAPI MOXAudio2::AddRef(void)
 {
 	return 0;
 }
 
-inline ULONG __stdcall MOXAudio2::Release(void)
+ULONG WINAPI MOXAudio2::Release(void)
 {
 	return 0;
 }
 
-inline HRESULT __stdcall MOXAudio2::RegisterForCallbacks(IXAudio2EngineCallback * pCallback)
+HRESULT WINAPI MOXAudio2::RegisterForCallbacks(IXAudio2EngineCallback * pCallback)
 {
 	HRESULT hr = m_mainXA2->RegisterForCallbacks(pCallback);
 	m_auxXA2->RegisterForCallbacks(pCallback);
 	return hr;
 }
 
-inline void __stdcall MOXAudio2::UnregisterForCallbacks(IXAudio2EngineCallback * pCallback)
+void WINAPI MOXAudio2::UnregisterForCallbacks(IXAudio2EngineCallback * pCallback)
 {
 	m_mainXA2->UnregisterForCallbacks(pCallback);
 	m_auxXA2->UnregisterForCallbacks(pCallback);
 }
 
-inline HRESULT __stdcall MOXAudio2::CreateSourceVoice(IXAudio2SourceVoice ** ppSourceVoice, const WAVEFORMATEX * pSourceFormat, UINT32 Flags, float MaxFrequencyRatio, IXAudio2VoiceCallback *pCallback, const XAUDIO2_VOICE_SENDS *pSendList, const XAUDIO2_EFFECT_CHAIN *pEffectChain)
+HRESULT WINAPI MOXAudio2::CreateSourceVoice(IXAudio2SourceVoice ** ppSourceVoice, const WAVEFORMATEX * pSourceFormat, UINT32 Flags, float MaxFrequencyRatio, IXAudio2VoiceCallback *pCallback, const XAUDIO2_VOICE_SENDS *pSendList, const XAUDIO2_EFFECT_CHAIN *pEffectChain)
 {
 	IXAudio2SourceVoice* mainVoice = nullptr;
 	IXAudio2SourceVoice* auxVoice = nullptr;
@@ -347,12 +347,12 @@ inline HRESULT __stdcall MOXAudio2::CreateSourceVoice(IXAudio2SourceVoice ** ppS
 	return result;
 }
 
-inline HRESULT __stdcall MOXAudio2::CreateSubmixVoice(IXAudio2SubmixVoice ** ppSubmixVoice, UINT32 InputChannels, UINT32 InputSampleRate, UINT32 Flags, UINT32 ProcessingStage, const XAUDIO2_VOICE_SENDS *pSendList, const XAUDIO2_EFFECT_CHAIN *pEffectChain)
+HRESULT WINAPI MOXAudio2::CreateSubmixVoice(IXAudio2SubmixVoice ** ppSubmixVoice, UINT32 InputChannels, UINT32 InputSampleRate, UINT32 Flags, UINT32 ProcessingStage, const XAUDIO2_VOICE_SENDS *pSendList, const XAUDIO2_EFFECT_CHAIN *pEffectChain)
 {
 	return m_mainXA2->CreateSubmixVoice(ppSubmixVoice, InputChannels, InputSampleRate, Flags, ProcessingStage, pSendList, pEffectChain);
 }
 
-inline HRESULT __stdcall MOXAudio2::CreateMasteringVoice(IXAudio2MasteringVoice ** ppMasteringVoice, UINT32 InputChannels, UINT32 InputSampleRate, UINT32 Flags, LPCWSTR szDeviceId, const XAUDIO2_EFFECT_CHAIN * pEffectChain, AUDIO_STREAM_CATEGORY StreamCategory)
+HRESULT WINAPI MOXAudio2::CreateMasteringVoice(IXAudio2MasteringVoice ** ppMasteringVoice, UINT32 InputChannels, UINT32 InputSampleRate, UINT32 Flags, LPCWSTR szDeviceId, const XAUDIO2_EFFECT_CHAIN * pEffectChain, AUDIO_STREAM_CATEGORY StreamCategory)
 {
 	IXAudio2MasteringVoice* mainVoice = nullptr;
 	IXAudio2MasteringVoice* auxVoice = nullptr;
@@ -375,31 +375,31 @@ inline HRESULT __stdcall MOXAudio2::CreateMasteringVoice(IXAudio2MasteringVoice 
 	return hrMain;
 }
 
-inline HRESULT __stdcall MOXAudio2::StartEngine(void)
+HRESULT WINAPI MOXAudio2::StartEngine(void)
 {
 	m_auxXA2->StartEngine();
 	return m_mainXA2->StartEngine();
 }
 
-inline void __stdcall MOXAudio2::StopEngine(void)
+void WINAPI MOXAudio2::StopEngine(void)
 {
 	m_auxXA2->StopEngine();
 	m_mainXA2->StopEngine();
 }
 
-inline HRESULT __stdcall MOXAudio2::CommitChanges(UINT32 OperationSet)
+HRESULT WINAPI MOXAudio2::CommitChanges(UINT32 OperationSet)
 {
 	m_auxXA2->CommitChanges(OperationSet);
 	return m_mainXA2->CommitChanges(OperationSet);
 }
 
-inline void __stdcall MOXAudio2::GetPerformanceData(XAUDIO2_PERFORMANCE_DATA * pPerfData)
+void WINAPI MOXAudio2::GetPerformanceData(XAUDIO2_PERFORMANCE_DATA * pPerfData)
 {
 	m_auxXA2->GetPerformanceData(pPerfData);
 	m_mainXA2->GetPerformanceData(pPerfData);
 }
 
-inline void __stdcall MOXAudio2::SetDebugConfiguration(const XAUDIO2_DEBUG_CONFIGURATION * pDebugConfiguration, void * pReserved)
+void WINAPI MOXAudio2::SetDebugConfiguration(const XAUDIO2_DEBUG_CONFIGURATION * pDebugConfiguration, void * pReserved)
 {
 	m_auxXA2->SetDebugConfiguration(pDebugConfiguration, pReserved);
 	m_mainXA2->SetDebugConfiguration(pDebugConfiguration, pReserved);
@@ -407,155 +407,155 @@ inline void __stdcall MOXAudio2::SetDebugConfiguration(const XAUDIO2_DEBUG_CONFI
 
 // Inherited via IXAudio2SourceVoice
 
-inline HRESULT __stdcall MOXAudio2SourceVoice::Start(UINT32 Flags, UINT32 OperationSet)
+HRESULT WINAPI MOXAudio2SourceVoice::Start(UINT32 Flags, UINT32 OperationSet)
 {
 	m_auxVoice->Start(Flags, OperationSet);
 	return m_mainVoice->Start(Flags, OperationSet);
 }
 
-inline HRESULT __stdcall MOXAudio2SourceVoice::Stop(UINT32 Flags, UINT32 OperationSet)
+HRESULT WINAPI MOXAudio2SourceVoice::Stop(UINT32 Flags, UINT32 OperationSet)
 {
 	m_auxVoice->Stop(Flags, OperationSet);
 	return m_mainVoice->Stop(Flags, OperationSet);
 }
 
-inline HRESULT __stdcall MOXAudio2SourceVoice::SubmitSourceBuffer(const XAUDIO2_BUFFER * pBuffer, const XAUDIO2_BUFFER_WMA * pBufferWMA)
+HRESULT WINAPI MOXAudio2SourceVoice::SubmitSourceBuffer(const XAUDIO2_BUFFER * pBuffer, const XAUDIO2_BUFFER_WMA * pBufferWMA)
 {
 	m_auxVoice->SubmitSourceBuffer(pBuffer, pBufferWMA);
 	return m_mainVoice->SubmitSourceBuffer(pBuffer, pBufferWMA);
 }
 
-inline HRESULT __stdcall MOXAudio2SourceVoice::FlushSourceBuffers(void)
+HRESULT WINAPI MOXAudio2SourceVoice::FlushSourceBuffers(void)
 {
 	m_auxVoice->FlushSourceBuffers();
 	return m_mainVoice->FlushSourceBuffers();
 }
 
-inline HRESULT __stdcall MOXAudio2SourceVoice::Discontinuity(void)
+HRESULT WINAPI MOXAudio2SourceVoice::Discontinuity(void)
 {
 	m_auxVoice->Discontinuity();
 	return m_mainVoice->Discontinuity();
 }
 
-inline HRESULT __stdcall MOXAudio2SourceVoice::ExitLoop(UINT32 OperationSet)
+HRESULT WINAPI MOXAudio2SourceVoice::ExitLoop(UINT32 OperationSet)
 {
 	// TODO
 	return m_mainVoice->ExitLoop(OperationSet);
 }
 
-inline void __stdcall MOXAudio2SourceVoice::GetState(XAUDIO2_VOICE_STATE * pVoiceState, UINT32 Flags)
+void WINAPI MOXAudio2SourceVoice::GetState(XAUDIO2_VOICE_STATE * pVoiceState, UINT32 Flags)
 {
 	// TODO
 	m_mainVoice->GetState(pVoiceState, Flags);
 }
 
-inline HRESULT __stdcall MOXAudio2SourceVoice::SetFrequencyRatio(float Ratio, UINT32 OperationSet)
+HRESULT WINAPI MOXAudio2SourceVoice::SetFrequencyRatio(float Ratio, UINT32 OperationSet)
 {
 	// TODO
 	return m_mainVoice->SetFrequencyRatio(Ratio, OperationSet);
 }
 
-inline void __stdcall MOXAudio2SourceVoice::GetFrequencyRatio(float * pRatio)
+void WINAPI MOXAudio2SourceVoice::GetFrequencyRatio(float * pRatio)
 {
 	// TODO
 	m_mainVoice->GetFrequencyRatio(pRatio);
 }
 
-inline HRESULT __stdcall MOXAudio2SourceVoice::SetSourceSampleRate(UINT32 NewSourceSampleRate)
+HRESULT WINAPI MOXAudio2SourceVoice::SetSourceSampleRate(UINT32 NewSourceSampleRate)
 {
 	// TODO
 	return m_mainVoice->SetSourceSampleRate(NewSourceSampleRate);
 }
 
-inline void MOXAudio2SourceVoice::GetVoiceDetails(XAUDIO2_VOICE_DETAILS * pVoiceDetails)
+void MOXAudio2SourceVoice::GetVoiceDetails(XAUDIO2_VOICE_DETAILS * pVoiceDetails)
 {
 	// TODO
 	m_mainVoice->GetVoiceDetails(pVoiceDetails);
 }
 
-inline HRESULT MOXAudio2SourceVoice::SetOutputVoices(const XAUDIO2_VOICE_SENDS * pSendList)
+HRESULT MOXAudio2SourceVoice::SetOutputVoices(const XAUDIO2_VOICE_SENDS * pSendList)
 {
 	return E_NOTIMPL;
 }
 
-inline HRESULT MOXAudio2SourceVoice::SetEffectChain(const XAUDIO2_EFFECT_CHAIN * pEffectChain)
+HRESULT MOXAudio2SourceVoice::SetEffectChain(const XAUDIO2_EFFECT_CHAIN * pEffectChain)
 {
 	return E_NOTIMPL;
 }
 
-inline HRESULT MOXAudio2SourceVoice::EnableEffect(UINT32 EffectIndex, UINT32 OperationSet)
+HRESULT MOXAudio2SourceVoice::EnableEffect(UINT32 EffectIndex, UINT32 OperationSet)
 {
 	return E_NOTIMPL;
 }
 
-inline HRESULT MOXAudio2SourceVoice::DisableEffect(UINT32 EffectIndex, UINT32 OperationSet)
+HRESULT MOXAudio2SourceVoice::DisableEffect(UINT32 EffectIndex, UINT32 OperationSet)
 {
 	return E_NOTIMPL;
 }
 
-inline void MOXAudio2SourceVoice::GetEffectState(UINT32 EffectIndex, BOOL * pEnabled)
+void MOXAudio2SourceVoice::GetEffectState(UINT32 EffectIndex, BOOL * pEnabled)
 {
 }
 
-inline HRESULT MOXAudio2SourceVoice::SetEffectParameters(UINT32 EffectIndex, const void * pParameters, UINT32 ParametersByteSize, UINT32 OperationSet)
-{
-	return E_NOTIMPL;
-}
-
-inline HRESULT MOXAudio2SourceVoice::GetEffectParameters(UINT32 EffectIndex, void * pParameters, UINT32 ParametersByteSize)
+HRESULT MOXAudio2SourceVoice::SetEffectParameters(UINT32 EffectIndex, const void * pParameters, UINT32 ParametersByteSize, UINT32 OperationSet)
 {
 	return E_NOTIMPL;
 }
 
-inline HRESULT MOXAudio2SourceVoice::SetFilterParameters(const XAUDIO2_FILTER_PARAMETERS * pParameters, UINT32 OperationSet)
+HRESULT MOXAudio2SourceVoice::GetEffectParameters(UINT32 EffectIndex, void * pParameters, UINT32 ParametersByteSize)
 {
 	return E_NOTIMPL;
 }
 
-inline void MOXAudio2SourceVoice::GetFilterParameters(XAUDIO2_FILTER_PARAMETERS * pParameters)
-{
-}
-
-inline HRESULT MOXAudio2SourceVoice::SetOutputFilterParameters(IXAudio2Voice * pDestinationVoice, const XAUDIO2_FILTER_PARAMETERS * pParameters, UINT32 OperationSet)
+HRESULT MOXAudio2SourceVoice::SetFilterParameters(const XAUDIO2_FILTER_PARAMETERS * pParameters, UINT32 OperationSet)
 {
 	return E_NOTIMPL;
 }
 
-inline void MOXAudio2SourceVoice::GetOutputFilterParameters(IXAudio2Voice * pDestinationVoice, XAUDIO2_FILTER_PARAMETERS * pParameters)
+void MOXAudio2SourceVoice::GetFilterParameters(XAUDIO2_FILTER_PARAMETERS * pParameters)
 {
 }
 
-inline HRESULT MOXAudio2SourceVoice::SetVolume(float Volume, UINT32 OperationSet)
+HRESULT MOXAudio2SourceVoice::SetOutputFilterParameters(IXAudio2Voice * pDestinationVoice, const XAUDIO2_FILTER_PARAMETERS * pParameters, UINT32 OperationSet)
+{
+	return E_NOTIMPL;
+}
+
+void MOXAudio2SourceVoice::GetOutputFilterParameters(IXAudio2Voice * pDestinationVoice, XAUDIO2_FILTER_PARAMETERS * pParameters)
+{
+}
+
+HRESULT MOXAudio2SourceVoice::SetVolume(float Volume, UINT32 OperationSet)
 {
 	m_auxVoice->SetVolume(Volume, OperationSet);
 	return m_mainVoice->SetVolume(Volume, OperationSet);
 }
 
-inline void MOXAudio2SourceVoice::GetVolume(float * pVolume)
+void MOXAudio2SourceVoice::GetVolume(float * pVolume)
 {
 	// TODO
 	m_mainVoice->GetVolume(pVolume);
 }
 
-inline HRESULT MOXAudio2SourceVoice::SetChannelVolumes(UINT32 Channels, const float * pVolumes, UINT32 OperationSet)
+HRESULT MOXAudio2SourceVoice::SetChannelVolumes(UINT32 Channels, const float * pVolumes, UINT32 OperationSet)
 {
 	return E_NOTIMPL;
 }
 
-inline void MOXAudio2SourceVoice::GetChannelVolumes(UINT32 Channels, float * pVolumes)
+void MOXAudio2SourceVoice::GetChannelVolumes(UINT32 Channels, float * pVolumes)
 {
 }
 
-inline HRESULT MOXAudio2SourceVoice::SetOutputMatrix(IXAudio2Voice * pDestinationVoice, UINT32 SourceChannels, UINT32 DestinationChannels, const float * pLevelMatrix, UINT32 OperationSet)
+HRESULT MOXAudio2SourceVoice::SetOutputMatrix(IXAudio2Voice * pDestinationVoice, UINT32 SourceChannels, UINT32 DestinationChannels, const float * pLevelMatrix, UINT32 OperationSet)
 {
 	return E_NOTIMPL;
 }
 
-inline void MOXAudio2SourceVoice::GetOutputMatrix(IXAudio2Voice * pDestinationVoice, UINT32 SourceChannels, UINT32 DestinationChannels, float * pLevelMatrix)
+void MOXAudio2SourceVoice::GetOutputMatrix(IXAudio2Voice * pDestinationVoice, UINT32 SourceChannels, UINT32 DestinationChannels, float * pLevelMatrix)
 {
 }
 
-inline void MOXAudio2SourceVoice::DestroyVoice()
+void MOXAudio2SourceVoice::DestroyVoice()
 {
 	// TODO
 	m_auxVoice->DestroyVoice();
@@ -565,7 +565,7 @@ inline void MOXAudio2SourceVoice::DestroyVoice()
 
 // Inherited via IXAudio2MasteringVoice
 
-inline HRESULT __stdcall MOXAudio2MasteringVoice::GetChannelMask(DWORD * pChannelmask)
+HRESULT WINAPI MOXAudio2MasteringVoice::GetChannelMask(DWORD * pChannelmask)
 {
 	HRESULT hr = m_mainVoice->GetChannelMask( pChannelmask );
 	if ( SUCCEEDED(hr) )
@@ -575,92 +575,92 @@ inline HRESULT __stdcall MOXAudio2MasteringVoice::GetChannelMask(DWORD * pChanne
 	return hr;
 }
 
-inline void __stdcall MOXAudio2MasteringVoice::GetVoiceDetails(XAUDIO2_VOICE_DETAILS * pVoiceDetails)
+void WINAPI MOXAudio2MasteringVoice::GetVoiceDetails(XAUDIO2_VOICE_DETAILS * pVoiceDetails)
 {
 	// TODO
 	m_mainVoice->GetVoiceDetails( pVoiceDetails );
 }
 
-inline HRESULT __stdcall MOXAudio2MasteringVoice::SetOutputVoices(const XAUDIO2_VOICE_SENDS * pSendList)
+HRESULT WINAPI MOXAudio2MasteringVoice::SetOutputVoices(const XAUDIO2_VOICE_SENDS * pSendList)
 {
 	// TODO
 	return m_mainVoice->SetOutputVoices(pSendList);
 }
 
-inline HRESULT __stdcall MOXAudio2MasteringVoice::SetEffectChain(const XAUDIO2_EFFECT_CHAIN * pEffectChain)
+HRESULT WINAPI MOXAudio2MasteringVoice::SetEffectChain(const XAUDIO2_EFFECT_CHAIN * pEffectChain)
 {
 	return m_mainVoice->SetEffectChain(pEffectChain);
 }
 
-inline HRESULT __stdcall MOXAudio2MasteringVoice::EnableEffect(UINT32 EffectIndex, UINT32 OperationSet)
+HRESULT WINAPI MOXAudio2MasteringVoice::EnableEffect(UINT32 EffectIndex, UINT32 OperationSet)
 {
 	return m_mainVoice->EnableEffect(EffectIndex, OperationSet);
 }
 
-inline HRESULT __stdcall MOXAudio2MasteringVoice::DisableEffect(UINT32 EffectIndex, UINT32 OperationSet)
+HRESULT WINAPI MOXAudio2MasteringVoice::DisableEffect(UINT32 EffectIndex, UINT32 OperationSet)
 {
 	return E_NOTIMPL;
 }
 
-inline void __stdcall MOXAudio2MasteringVoice::GetEffectState(UINT32 EffectIndex, BOOL * pEnabled)
+void WINAPI MOXAudio2MasteringVoice::GetEffectState(UINT32 EffectIndex, BOOL * pEnabled)
 {
 }
 
-inline HRESULT __stdcall MOXAudio2MasteringVoice::SetEffectParameters(UINT32 EffectIndex, const void * pParameters, UINT32 ParametersByteSize, UINT32 OperationSet)
-{
-	return E_NOTIMPL;
-}
-
-inline HRESULT __stdcall MOXAudio2MasteringVoice::GetEffectParameters(UINT32 EffectIndex, void * pParameters, UINT32 ParametersByteSize)
+HRESULT WINAPI MOXAudio2MasteringVoice::SetEffectParameters(UINT32 EffectIndex, const void * pParameters, UINT32 ParametersByteSize, UINT32 OperationSet)
 {
 	return E_NOTIMPL;
 }
 
-inline HRESULT __stdcall MOXAudio2MasteringVoice::SetFilterParameters(const XAUDIO2_FILTER_PARAMETERS * pParameters, UINT32 OperationSet)
+HRESULT WINAPI MOXAudio2MasteringVoice::GetEffectParameters(UINT32 EffectIndex, void * pParameters, UINT32 ParametersByteSize)
 {
 	return E_NOTIMPL;
 }
 
-inline void __stdcall MOXAudio2MasteringVoice::GetFilterParameters(XAUDIO2_FILTER_PARAMETERS * pParameters)
-{
-}
-
-inline HRESULT __stdcall MOXAudio2MasteringVoice::SetOutputFilterParameters(IXAudio2Voice * pDestinationVoice, const XAUDIO2_FILTER_PARAMETERS * pParameters, UINT32 OperationSet)
+HRESULT WINAPI MOXAudio2MasteringVoice::SetFilterParameters(const XAUDIO2_FILTER_PARAMETERS * pParameters, UINT32 OperationSet)
 {
 	return E_NOTIMPL;
 }
 
-inline void __stdcall MOXAudio2MasteringVoice::GetOutputFilterParameters(IXAudio2Voice * pDestinationVoice, XAUDIO2_FILTER_PARAMETERS * pParameters)
+void WINAPI MOXAudio2MasteringVoice::GetFilterParameters(XAUDIO2_FILTER_PARAMETERS * pParameters)
 {
 }
 
-inline HRESULT __stdcall MOXAudio2MasteringVoice::SetVolume(float Volume, UINT32 OperationSet)
+HRESULT WINAPI MOXAudio2MasteringVoice::SetOutputFilterParameters(IXAudio2Voice * pDestinationVoice, const XAUDIO2_FILTER_PARAMETERS * pParameters, UINT32 OperationSet)
+{
+	return E_NOTIMPL;
+}
+
+void WINAPI MOXAudio2MasteringVoice::GetOutputFilterParameters(IXAudio2Voice * pDestinationVoice, XAUDIO2_FILTER_PARAMETERS * pParameters)
+{
+}
+
+HRESULT WINAPI MOXAudio2MasteringVoice::SetVolume(float Volume, UINT32 OperationSet)
 {
 	return m_mainVoice->SetVolume(Volume, OperationSet);
 }
 
-inline void __stdcall MOXAudio2MasteringVoice::GetVolume(float * pVolume)
+void WINAPI MOXAudio2MasteringVoice::GetVolume(float * pVolume)
 {
 }
 
-inline HRESULT __stdcall MOXAudio2MasteringVoice::SetChannelVolumes(UINT32 Channels, const float * pVolumes, UINT32 OperationSet)
-{
-	return E_NOTIMPL;
-}
-
-inline void __stdcall MOXAudio2MasteringVoice::GetChannelVolumes(UINT32 Channels, float * pVolumes)
-{
-}
-
-inline HRESULT __stdcall MOXAudio2MasteringVoice::SetOutputMatrix(IXAudio2Voice * pDestinationVoice, UINT32 SourceChannels, UINT32 DestinationChannels, const float * pLevelMatrix, UINT32 OperationSet)
+HRESULT WINAPI MOXAudio2MasteringVoice::SetChannelVolumes(UINT32 Channels, const float * pVolumes, UINT32 OperationSet)
 {
 	return E_NOTIMPL;
 }
 
-inline void __stdcall MOXAudio2MasteringVoice::GetOutputMatrix(IXAudio2Voice * pDestinationVoice, UINT32 SourceChannels, UINT32 DestinationChannels, float * pLevelMatrix)
+void WINAPI MOXAudio2MasteringVoice::GetChannelVolumes(UINT32 Channels, float * pVolumes)
 {
 }
 
-inline void __stdcall MOXAudio2MasteringVoice::DestroyVoice()
+HRESULT WINAPI MOXAudio2MasteringVoice::SetOutputMatrix(IXAudio2Voice * pDestinationVoice, UINT32 SourceChannels, UINT32 DestinationChannels, const float * pLevelMatrix, UINT32 OperationSet)
+{
+	return E_NOTIMPL;
+}
+
+void WINAPI MOXAudio2MasteringVoice::GetOutputMatrix(IXAudio2Voice * pDestinationVoice, UINT32 SourceChannels, UINT32 DestinationChannels, float * pLevelMatrix)
+{
+}
+
+void WINAPI MOXAudio2MasteringVoice::DestroyVoice()
 {
 }
