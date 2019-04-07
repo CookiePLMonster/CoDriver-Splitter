@@ -7,62 +7,10 @@
 #include "MOXAudio2_Common.h"
 
 #include <wrl.h>
-#include <initguid.h>
-#include <Mmdeviceapi.h>
 #include <ks.h>
 #include <ksmedia.h>
 
 #include <algorithm>
-
-std::wstring GetCommunicationsDeviceString()
-{
-	using namespace Microsoft::WRL;
-	using namespace Microsoft::WRL::Wrappers;
-
-	std::wstring result;
-
-	HRESULT hrCom = CoInitializeEx( nullptr, COINIT_APARTMENTTHREADED );
-
-	// Superfluous scope to ensure COM pointer deinits before CoUnitialize
-	{
-		ComPtr<IMMDeviceEnumerator> enumerator;
-
-		HRESULT hr = CoCreateInstance(
-			__uuidof(MMDeviceEnumerator), NULL,
-			CLSCTX_ALL, IID_PPV_ARGS(enumerator.GetAddressOf()) );
-		if ( SUCCEEDED(hr) )
-		{
-			ComPtr<IMMDevice> device;
-			hr = enumerator->GetDefaultAudioEndpoint( eRender, eCommunications, device.GetAddressOf() );
-			if ( SUCCEEDED(hr) )
-			{
-				LPWSTR strId = nullptr;
-				if ( SUCCEEDED( device->GetId( &strId ) ) )
-				{
-					// Sources:
-					// https://github.com/citizenfx/fivem/blob/e628cfa2e0a4e9e803de31af3c805e9baba57048/code/components/voip-mumble/src/MumbleAudioOutput.cpp#L710
-					// https://gist.github.com/mendsley/fbb495b292b95d35a014109e586d35dd
-					result.reserve(112);
-					result.append(L"\\\\?\\SWD#MMDEVAPI#");
-					result.append(strId);
-					result.push_back(L'#');
-					const size_t offset = result.size();
-
-					result.resize(result.capacity());
-					StringFromGUID2(DEVINTERFACE_AUDIO_RENDER, &result[offset], (int)(result.size() - offset));
-					CoTaskMemFree( strId );
-				}
-			}
-		}
-	}
-
-	if ( SUCCEEDED(hrCom) )
-	{
-		CoUninitialize();
-	}
-
-	return result;
-}
 
 void FixupMasteringVoiceChannelMask( DWORD* pChannelmask )
 {

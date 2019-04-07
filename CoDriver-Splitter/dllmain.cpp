@@ -8,9 +8,17 @@
 #include <Shlwapi.h>
 
 #include "MOXAudio2_Hooks.h"
+#include "Detours/detours.h"
 
 #pragma comment(lib, "shlwapi.lib")
 
+#ifdef _WIN64
+#pragma comment(lib, "Detours_x64.lib")
+#else
+#pragma comment(lib, "Detours.lib")
+#endif
+
+// Used by XAudio2.8 and XAudio2.9
 HMODULE hRealXAudio2;
 HMODULE LoadRealXAudio2()
 {
@@ -30,11 +38,54 @@ HMODULE LoadRealXAudio2()
 	return hRealXAudio2 = LoadLibrary( dllPath );
 }
 
+// Used by XAudio2.7
+HMODULE LoadRealLegacyXAudio2()
+{
+	if ( hRealXAudio2 != nullptr ) return hRealXAudio2;
+
+	TCHAR dllPath[MAX_PATH];
+	if ( GetSystemDirectory( dllPath, MAX_PATH ) == 0 ) return hRealXAudio2;
+
+	PathAppend( dllPath, TEXT("xaudio2_7.dll") );
+	return hRealXAudio2 = LoadLibrary( dllPath );
+}
+
+auto* OrgCoCreateInstance = CoCreateInstance;
+HRESULT WINAPI CoCreateInstance_Hook(REFCLSID rclsid, LPUNKNOWN pUnkOuter, DWORD dwClsContext, REFIID riid, LPVOID *ppv)
+{
+	auto hr = CreateLegacyXAudio2( rclsid, riid, ppv );
+	if ( hr )
+	{
+		return *hr;
+	}
+	return OrgCoCreateInstance( rclsid, pUnkOuter, dwClsContext, riid, ppv );
+}
+
+
 BOOL APIENTRY DllMain( HMODULE hModule,
 	DWORD  ul_reason_for_call,
 	LPVOID /*lpReserved*/
 )
 {
+	if ( ul_reason_for_call != DLL_PROCESS_ATTACH && ul_reason_for_call != DLL_PROCESS_DETACH )
+	{
+		return TRUE;
+	}
+
+	DetourTransactionBegin();
+	DetourUpdateThread(GetCurrentThread());
+
+	if ( ul_reason_for_call == DLL_PROCESS_ATTACH )
+	{
+		DetourAttach( &(PVOID&)OrgCoCreateInstance, CoCreateInstance_Hook );
+	}
+	else
+	{
+		DetourDetach( &(PVOID&)OrgCoCreateInstance, CoCreateInstance_Hook );
+	}
+
+	DetourTransactionCommit();
+
 	return TRUE;
 }
 

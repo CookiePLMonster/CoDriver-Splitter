@@ -30,6 +30,9 @@
     <ClCompile Include="IID.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="MOXAudio2Legacy.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="MOXAudio2_Common.h">
