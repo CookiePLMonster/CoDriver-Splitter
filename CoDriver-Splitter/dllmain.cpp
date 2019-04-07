@@ -11,7 +11,6 @@
 
 #pragma comment(lib, "shlwapi.lib")
 
-HMODULE thisModule;
 HMODULE hRealXAudio2;
 HMODULE LoadRealXAudio2()
 {
@@ -20,14 +19,15 @@ HMODULE LoadRealXAudio2()
 	TCHAR systemPath[MAX_PATH];
 	if ( GetSystemDirectory( systemPath, MAX_PATH ) == 0 ) return hRealXAudio2;
 
-	// Obtain the name of this DLL and try to load a matching file
-	TCHAR modulePath[MAX_PATH];
-	if ( GetModuleFileName( thisModule, modulePath, MAX_PATH ) == 0 ) return hRealXAudio2;
+	// First try to load XAudio 2.9, no matter what DLL this is
+	// On Windows 8/8.1, it'll fail so fall back to XAudio 2.8
+	TCHAR dllPath[MAX_PATH];
+	PathCombine( dllPath, systemPath, TEXT("xaudio2_9.dll") );
+	hRealXAudio2 = LoadLibrary( dllPath );
+	if ( hRealXAudio2 != nullptr ) return hRealXAudio2;
 
-	LPCTSTR fileName = PathFindFileName( modulePath );
-	PathAppend( systemPath, fileName );
-
-	return hRealXAudio2 = LoadLibrary( systemPath );
+	PathCombine( dllPath, systemPath, TEXT("xaudio2_8.dll") );
+	return hRealXAudio2 = LoadLibrary( dllPath );
 }
 
 BOOL APIENTRY DllMain( HMODULE hModule,
@@ -35,13 +35,6 @@ BOOL APIENTRY DllMain( HMODULE hModule,
 	LPVOID /*lpReserved*/
 )
 {
-
-	switch (ul_reason_for_call)
-	{
-	case DLL_PROCESS_ATTACH:
-		thisModule = hModule;
-		break;
-	}
 	return TRUE;
 }
 
