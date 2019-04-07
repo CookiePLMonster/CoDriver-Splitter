@@ -233,6 +233,13 @@ void WINAPI MOXAudio2::UnregisterForCallbacks(IXAudio2EngineCallback * pCallback
 
 HRESULT WINAPI MOXAudio2::CreateSourceVoice(IXAudio2SourceVoice ** ppSourceVoice, const WAVEFORMATEX * pSourceFormat, UINT32 Flags, float MaxFrequencyRatio, IXAudio2VoiceCallback *pCallback, const XAUDIO2_VOICE_SENDS *pSendList, const XAUDIO2_EFFECT_CHAIN *pEffectChain)
 {
+	// Only wrap voices with at least 3 channels
+	// This never happens with supported titles, but prevents unsupported titles from crashing
+	if ( pSourceFormat->nChannels < 3 )
+	{
+		return m_mainXA2->CreateSourceVoice(ppSourceVoice, pSourceFormat, Flags, MaxFrequencyRatio, pCallback, pSendList, pEffectChain);
+	}
+
 	IXAudio2SourceVoice* mainVoice = nullptr;
 	IXAudio2SourceVoice* auxVoice = nullptr;
 	HRESULT result = m_mainXA2->CreateSourceVoice(&mainVoice, pSourceFormat, Flags, MaxFrequencyRatio, pCallback, pSendList, pEffectChain);
