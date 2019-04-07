@@ -4,6 +4,8 @@
 #define _WIN32_WINNT 0x0601
 #include <Windows.h>
 
+#include <mmreg.h>
+
 #include "MOXAudio2_Common.h"
 
 #include <wrl.h>
@@ -22,6 +24,19 @@ void FixupMasteringVoiceChannelMask( DWORD* pChannelmask )
 	{
 		*pChannelmask |= SPEAKER_SIDE_LEFT|SPEAKER_SIDE_RIGHT;
 	}
+}
+
+SIZE_T CalculateAuxBufferSize( const WAVEFORMATEX* pSourceFormat )
+{
+	// Wwise seems to submit samples to XAudio2 in chunks of 1024
+	// To be safe, we'll make a buffer big enough to store a full second of audio and align it up to 1024
+	SIZE_T RingBufferSize = pSourceFormat->nAvgBytesPerSec;
+	if ( RingBufferSize == 0 )
+	{
+		RingBufferSize = pSourceFormat->nSamplesPerSec * pSourceFormat->nBlockAlign;
+	}
+	RingBufferSize = (RingBufferSize + 1023) & ~(1023);
+	return RingBufferSize;
 }
 
 DWORD PopCount( DWORD mask )
@@ -96,4 +111,40 @@ void SetOutputMatrixForAuxillary( UINT32 source, UINT32 destination, std::vector
 	{
 		NormalizeOutputMatrix( levels, 0.75f );
 	}
+}
+
+const BYTE* AuxillaryVoiceRingBuffer::CopyToRingBuffer( const BYTE* bytes, UINT32 size )
+{
+	BYTE* space;
+
+	EnterCriticalSection( &m_mutex );
+	space = m_cursor;
+	if ( space + size > m_buffer + m_bufferSize )
+	{
+		space = Reset();
+	}
+	m_cursor += size;
+	LeaveCriticalSection( &m_mutex );
+
+	return static_cast<BYTE*>(memcpy( space, bytes, size ));
+}
+
+AuxillaryVoiceRingBuffer::AuxillaryVoiceRingBuffer( SIZE_T size )
+	: m_bufferSize(size)
+{
+	InitializeCriticalSection(&m_mutex);
+	m_buffer = new BYTE[m_bufferSize];
+
+	Reset();
+}
+
+AuxillaryVoiceRingBuffer::~AuxillaryVoiceRingBuffer()
+{
+	delete[] m_buffer;
+	DeleteCriticalSection(&m_mutex);
+}
+
+BYTE* AuxillaryVoiceRingBuffer::Reset()
+{
+	return m_cursor = m_buffer;
 }

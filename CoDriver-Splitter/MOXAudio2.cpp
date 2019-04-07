@@ -174,14 +174,16 @@ public:
 	virtual void WINAPI GetOutputMatrix(IXAudio2Voice *pDestinationVoice, UINT32 SourceChannels, UINT32 DestinationChannels, float *pLevelMatrix) override;
 	virtual void WINAPI DestroyVoice() override;
 
-	MOXAudio2SourceVoice( IXAudio2SourceVoice* main, IXAudio2SourceVoice* aux )
-		: m_mainVoice( main ), m_auxVoice( aux )
+	MOXAudio2SourceVoice( IXAudio2SourceVoice* main, IXAudio2SourceVoice* aux, SIZE_T RingBufferSize )
+		: m_mainVoice( main ), m_auxVoice( aux ), m_auxVoiceBuffer( RingBufferSize )
 	{
 	}
 
 private:
 	IXAudio2SourceVoice* m_mainVoice;
 	IXAudio2SourceVoice* m_auxVoice;
+
+	AuxillaryVoiceRingBuffer m_auxVoiceBuffer;
 };
 
 
@@ -235,7 +237,7 @@ HRESULT WINAPI MOXAudio2::CreateSourceVoice(IXAudio2SourceVoice ** ppSourceVoice
 	HRESULT result = m_mainXA2->CreateSourceVoice(&mainVoice, pSourceFormat, Flags, MaxFrequencyRatio, pCallback, pSendList, pEffectChain);
 	m_auxXA2->CreateSourceVoice(&auxVoice, pSourceFormat, Flags, MaxFrequencyRatio, nullptr, pSendList, pEffectChain);
 
-	*ppSourceVoice = new MOXAudio2SourceVoice( mainVoice, auxVoice );
+	*ppSourceVoice = new MOXAudio2SourceVoice( mainVoice, auxVoice, CalculateAuxBufferSize( pSourceFormat ) );
 
 	// Mute center speaker on output matrix
 	std::vector<float> levels;
@@ -348,7 +350,10 @@ HRESULT WINAPI MOXAudio2SourceVoice::Stop(UINT32 Flags, UINT32 OperationSet)
 
 HRESULT WINAPI MOXAudio2SourceVoice::SubmitSourceBuffer(const XAUDIO2_BUFFER * pBuffer, const XAUDIO2_BUFFER_WMA * pBufferWMA)
 {
-	m_auxVoice->SubmitSourceBuffer(pBuffer, pBufferWMA);
+	XAUDIO2_BUFFER auxBuffer = *pBuffer;
+	auxBuffer.pAudioData = m_auxVoiceBuffer.CopyToRingBuffer( pBuffer->pAudioData, pBuffer->AudioBytes );
+
+	m_auxVoice->SubmitSourceBuffer(&auxBuffer, pBufferWMA);
 	return m_mainVoice->SubmitSourceBuffer(pBuffer, pBufferWMA);
 }
 
