@@ -11,6 +11,7 @@
 #undef INITGUID
 
 #include <string>
+#include <cassert>
 
 #include "MOXAudio2_Common.h"
 #include "MOXAudio2_Hooks.h"
@@ -247,8 +248,8 @@ HRESULT WINAPI MOXAudio2Legacy::CreateSourceVoice(IXAudio2SourceVoice ** ppSourc
 
 HRESULT WINAPI MOXAudio2Legacy::CreateSubmixVoice(IXAudio2SubmixVoice ** ppSubmixVoice, UINT32 InputChannels, UINT32 InputSampleRate, UINT32 Flags, UINT32 ProcessingStage, const XAUDIO2_VOICE_SENDS *pSendList, const XAUDIO2_EFFECT_CHAIN *pEffectChain)
 {
-	m_auxXA2->CreateSubmixVoice(ppSubmixVoice, InputChannels, InputSampleRate, Flags, ProcessingStage, pSendList, pEffectChain);
-	return m_mainXA2->CreateSubmixVoice(ppSubmixVoice, InputChannels, InputSampleRate, Flags, ProcessingStage, pSendList, pEffectChain);
+	assert( !"Submix voices not supported!");
+	return E_NOTIMPL;
 }
 
 HRESULT WINAPI MOXAudio2Legacy::CreateMasteringVoice(IXAudio2MasteringVoice ** ppMasteringVoice, UINT32 InputChannels, UINT32 InputSampleRate, UINT32 Flags, UINT32 DeviceIndex, const XAUDIO2_EFFECT_CHAIN *pEffectChain)
