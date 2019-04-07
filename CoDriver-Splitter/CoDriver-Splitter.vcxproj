@@ -132,10 +132,12 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="dllmain.cpp" />
+    <ClCompile Include="IID.cpp" />
     <ClCompile Include="MOXAudio2.cpp" />
     <ClCompile Include="MOXAudio2_Common.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="IID.h" />
     <ClInclude Include="MOXAudio2_Common.h" />
     <ClInclude Include="MOXAudio2_Hooks.h" />
   </ItemGroup>
