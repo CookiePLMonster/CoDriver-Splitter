@@ -595,34 +595,45 @@ void WINAPI MOXAudio2MasteringVoice::DestroyVoice()
 HRESULT WINAPI MOXAudio2Create( IXAudio2 **ppXAudio2, UINT32 Flags, XAUDIO2_PROCESSOR XAudio2Processor )
 {
 	HMODULE realXAudio2 = LoadRealXAudio2();
+	if ( realXAudio2 == nullptr )
+	{
+		return XAUDIO2_E_INVALID_CALL;
+	}
 
 	auto createFn = (HRESULT(WINAPI*)(IXAudio2**, UINT32, XAUDIO2_PROCESSOR ))GetProcAddress( realXAudio2, "XAudio2Create" );
+	if ( createFn == nullptr )
+	{
+		return XAUDIO2_E_INVALID_CALL;
+	}
 
 	using namespace Microsoft::WRL;
 	using namespace Microsoft::WRL::Wrappers;
 
 	ComPtr<IXAudio2> mainDevice;
 	HRESULT hrMain = createFn( mainDevice.GetAddressOf(), Flags, XAudio2Processor );
-	if ( SUCCEEDED(hrMain) )
+	if ( FAILED(hrMain) )
 	{
-		// In DiRT Rally on Windows 10, it is possible that "real" XAudio2 is in fact our own XAudio2.9
-		// Try to detect this case and if it's really happening, don't wrap the APIs again
+		return hrMain;
+	}
 
-		ComPtr<MOXAudio2> maybeMOXAudio2;
-		if ( SUCCEEDED( mainDevice.As( &maybeMOXAudio2 ) ) )
-		{
-			*ppXAudio2 = maybeMOXAudio2.Detach();
-			return S_OK;
-		}
+	// In DiRT Rally on Windows 10, it is possible that "real" XAudio2 is in fact our own XAudio2.9
+	// Try to detect this case and if it's really happening, don't wrap the APIs again
+	ComPtr<MOXAudio2> maybeMOXAudio2;
+	if ( SUCCEEDED( mainDevice.As( &maybeMOXAudio2 ) ) )
+	{
+		*ppXAudio2 = maybeMOXAudio2.Detach();
+		return S_OK;
 	}
 
 	ComPtr<IXAudio2> auxDevice = nullptr;
 	HRESULT hrAux = createFn( auxDevice.GetAddressOf(), Flags, XAudio2Processor );
-	if ( SUCCEEDED(hrAux) )
+	if ( FAILED(hrAux) )
 	{
-		*ppXAudio2 = new MOXAudio2( mainDevice.Detach(), auxDevice.Detach() );
+		return hrAux;
 	}
-	return hrAux;
+
+	*ppXAudio2 = new MOXAudio2( mainDevice.Detach(), auxDevice.Detach() );
+	return S_OK;
 }
 
 extern "C"
