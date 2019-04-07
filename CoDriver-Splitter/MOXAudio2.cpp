@@ -696,7 +696,7 @@ HRESULT WINAPI MOXAudio2Create( IXAudio2 **ppXAudio2, UINT32 Flags, XAUDIO2_PROC
 
 extern "C"
 {
-	__declspec(dllexport) HRESULT WINAPI XAudio2Create_Hooked( IXAudio2 **ppXAudio2, UINT32 Flags, XAUDIO2_PROCESSOR XAudio2Processor )
+	HRESULT WINAPI XAudio2Create_Export( IXAudio2 **ppXAudio2, UINT32 Flags, XAUDIO2_PROCESSOR XAudio2Processor )
 	{
 		return MOXAudio2Create( ppXAudio2, Flags, XAudio2Processor );
 	}

@@ -37,6 +37,8 @@ DWORD GetCommunicationsDeviceID( IXAudio2* xaudio )
 	return 0;
 }
 
+static ULONG objectsCount = 0;
+
 class MOXAudio2Legacy final : public IXAudio2
 {
 public:
@@ -62,12 +64,15 @@ public:
 	MOXAudio2Legacy( IXAudio2* main, IXAudio2* aux )
 		: m_mainXA2( main ), m_auxXA2( aux )
 	{
+		InterlockedIncrement( &objectsCount );
 	}
 
 	~MOXAudio2Legacy()
 	{
 		m_auxXA2->Release();
 		m_mainXA2->Release();
+
+		InterlockedDecrement( &objectsCount );
 	}
 
 private:
@@ -650,13 +655,13 @@ std::optional<HRESULT> CreateLegacyXAudio2(REFCLSID rclsid, REFIID riid, LPVOID 
 	HMODULE realXAudio2 = LoadRealLegacyXAudio2( rclsid == CLSID_XAudio2_Debug );
 	if ( realXAudio2 == nullptr )
 	{
-		return XAUDIO2_E_INVALID_CALL;
+		return E_UNEXPECTED;
 	}
 
 	auto createFn = (HRESULT(WINAPI*)(REFCLSID,REFIID,LPVOID*))GetProcAddress( realXAudio2, "DllGetClassObject" );
 	if ( createFn == nullptr )
 	{
-		return XAUDIO2_E_INVALID_CALL;
+		return E_UNEXPECTED;
 	}
 
 	ComPtr<IClassFactory> factory;
@@ -691,4 +696,106 @@ std::optional<HRESULT> CreateLegacyXAudio2(REFCLSID rclsid, REFIID riid, LPVOID 
 
 	// Query it to whatever the game wanted just to be extra sure
 	return moxaDevice.CopyTo( riid, ppv );
+}
+
+
+
+// COM factory for MOXAudio2Legacy
+class MOXAudio2LegacyFactory final : public IClassFactory
+{
+public:
+	// Inherited via IClassFactory
+	virtual HRESULT WINAPI QueryInterface(REFIID riid, void ** ppvObject) override
+	{
+		if ( ppvObject == nullptr ) return E_POINTER;
+
+		if ( riid == IID_IUnknown || riid == IID_IClassFactory )
+		{
+			*ppvObject = static_cast<IClassFactory*>(this);
+			AddRef();
+			return S_OK;
+		}
+
+		*ppvObject = nullptr;
+		return E_NOINTERFACE;
+	}
+
+	virtual ULONG WINAPI AddRef(void) override
+	{
+		return InterlockedIncrement( &m_ref );
+	}
+
+	virtual ULONG WINAPI Release(void) override
+	{
+		const ULONG ref = InterlockedDecrement( &m_ref );
+		if ( ref == 0 && m_lock == 0 )
+		{
+			delete this;
+		}
+		return ref;
+	}
+
+	virtual HRESULT WINAPI CreateInstance(IUnknown * pUnkOuter, REFIID riid, void ** ppvObject) override
+	{
+		auto hr = CreateLegacyXAudio2( m_clsid, riid, ppvObject );
+		return hr ? *hr : E_NOINTERFACE;
+	}
+
+	virtual HRESULT WINAPI LockServer(BOOL fLock) override
+	{
+		if ( fLock != FALSE )
+		{
+			InterlockedIncrement( &m_lock );
+		}
+		else
+		{
+			const ULONG lock = InterlockedDecrement( &m_lock );
+			if ( lock == 0 && m_ref == 0 )
+			{
+				delete this;
+			}
+		}
+		return S_OK;
+	}
+
+	explicit MOXAudio2LegacyFactory( REFCLSID rclsid )
+		: m_clsid( rclsid )
+	{
+		InterlockedIncrement( &objectsCount );
+	}
+
+	~MOXAudio2LegacyFactory()
+	{
+		InterlockedDecrement( &objectsCount );
+	}
+
+private:
+	const CLSID	m_clsid;
+
+	ULONG	m_ref = 1;
+	ULONG	m_lock = 0;
+};
+
+HRESULT DllGetClassObject_Wrap(REFCLSID rclsid, REFIID riid, LPVOID *ppv)
+{
+	if ( rclsid == CLSID_XAudio2 || rclsid == CLSID_XAudio2_Debug )
+	{
+		Microsoft::WRL::ComPtr<MOXAudio2LegacyFactory> factory;
+		factory.Attach( new MOXAudio2LegacyFactory( rclsid ) );
+		return factory.CopyTo( riid, ppv );
+	}
+	return CLASS_E_CLASSNOTAVAILABLE;
+}
+
+extern "C"
+{
+	HRESULT WINAPI DllGetClassObject_Export(REFCLSID rclsid, REFIID riid, LPVOID *ppv)
+	{
+		return DllGetClassObject_Wrap( rclsid, riid, ppv );
+	}
+
+	HRESULT WINAPI DllCanUnloadNow_Export()
+	{
+		return objectsCount == 0 ? S_OK : S_FALSE;
+	}
 }

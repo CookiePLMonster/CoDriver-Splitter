@@ -1,2 +1,4 @@
 EXPORTS
-	XAudio2Create=XAudio2Create_Hooked
+	XAudio2Create=XAudio2Create_Export
+	DllGetClassObject=DllGetClassObject_Export PRIVATE
+	DllCanUnloadNow=DllCanUnloadNow_Export PRIVATE
