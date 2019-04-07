@@ -284,7 +284,7 @@ HRESULT WINAPI MOXAudio2::CreateMasteringVoice(IXAudio2MasteringVoice ** ppMaste
 	IXAudio2MasteringVoice* mainVoice = nullptr;
 	IXAudio2MasteringVoice* auxVoice = nullptr;
 
-	HRESULT hrAux = m_auxXA2->CreateMasteringVoice(&auxVoice, InputChannels, InputSampleRate, Flags, GetCommunicationsDeviceString().c_str(), pEffectChain, StreamCategory);
+	HRESULT hrAux = m_auxXA2->CreateMasteringVoice(&auxVoice, InputChannels, InputSampleRate, Flags, GetCommunicationsDeviceString().c_str(), pEffectChain, AudioCategory_Speech);
 	if ( FAILED(hrAux) )
 	{
 		return hrAux;
