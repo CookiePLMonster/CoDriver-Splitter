@@ -56,25 +56,25 @@ class MOXAudio2MasteringVoice final : public IXAudio2MasteringVoice
 public:
 	// Inherited via IXAudio2MasteringVoice
 	virtual HRESULT WINAPI GetChannelMask(DWORD * pChannelmask) override;
-	virtual void WINAPI GetVoiceDetails(XAUDIO2_VOICE_DETAILS *pVoiceDetails);
-	virtual HRESULT WINAPI SetOutputVoices(const XAUDIO2_VOICE_SENDS *pSendList);
-	virtual HRESULT WINAPI SetEffectChain(const XAUDIO2_EFFECT_CHAIN *pEffectChain);
-	virtual HRESULT WINAPI EnableEffect(UINT32 EffectIndex, UINT32 OperationSet);
-	virtual HRESULT WINAPI DisableEffect(UINT32 EffectIndex, UINT32 OperationSet);
-	virtual void WINAPI GetEffectState(UINT32 EffectIndex, BOOL *pEnabled);
-	virtual HRESULT WINAPI SetEffectParameters(UINT32 EffectIndex, const void *pParameters, UINT32 ParametersByteSize, UINT32 OperationSet);
-	virtual HRESULT WINAPI GetEffectParameters(UINT32 EffectIndex, void *pParameters, UINT32 ParametersByteSize);
-	virtual HRESULT WINAPI SetFilterParameters(const XAUDIO2_FILTER_PARAMETERS *pParameters, UINT32 OperationSet);
-	virtual void WINAPI GetFilterParameters(XAUDIO2_FILTER_PARAMETERS *pParameters);
-	virtual HRESULT WINAPI SetOutputFilterParameters(IXAudio2Voice *pDestinationVoice, const XAUDIO2_FILTER_PARAMETERS *pParameters, UINT32 OperationSet);
-	virtual void WINAPI GetOutputFilterParameters(IXAudio2Voice *pDestinationVoice, XAUDIO2_FILTER_PARAMETERS *pParameters);
-	virtual HRESULT WINAPI SetVolume(float Volume, UINT32 OperationSet);
-	virtual void WINAPI GetVolume(float *pVolume);
-	virtual HRESULT WINAPI SetChannelVolumes(UINT32 Channels, const float *pVolumes, UINT32 OperationSet);
-	virtual void WINAPI GetChannelVolumes(UINT32 Channels, float *pVolumes);
-	virtual HRESULT WINAPI SetOutputMatrix(IXAudio2Voice *pDestinationVoice, UINT32 SourceChannels, UINT32 DestinationChannels, const float *pLevelMatrix, UINT32 OperationSet);
-	virtual void WINAPI GetOutputMatrix(IXAudio2Voice *pDestinationVoice, UINT32 SourceChannels, UINT32 DestinationChannels, float *pLevelMatrix);
-	virtual void WINAPI DestroyVoice();
+	virtual void WINAPI GetVoiceDetails(XAUDIO2_VOICE_DETAILS *pVoiceDetails) override;
+	virtual HRESULT WINAPI SetOutputVoices(const XAUDIO2_VOICE_SENDS *pSendList) override;
+	virtual HRESULT WINAPI SetEffectChain(const XAUDIO2_EFFECT_CHAIN *pEffectChain) override;
+	virtual HRESULT WINAPI EnableEffect(UINT32 EffectIndex, UINT32 OperationSet) override;
+	virtual HRESULT WINAPI DisableEffect(UINT32 EffectIndex, UINT32 OperationSet) override;
+	virtual void WINAPI GetEffectState(UINT32 EffectIndex, BOOL *pEnabled) override;
+	virtual HRESULT WINAPI SetEffectParameters(UINT32 EffectIndex, const void *pParameters, UINT32 ParametersByteSize, UINT32 OperationSet) override;
+	virtual HRESULT WINAPI GetEffectParameters(UINT32 EffectIndex, void *pParameters, UINT32 ParametersByteSize) override;
+	virtual HRESULT WINAPI SetFilterParameters(const XAUDIO2_FILTER_PARAMETERS *pParameters, UINT32 OperationSet) override;
+	virtual void WINAPI GetFilterParameters(XAUDIO2_FILTER_PARAMETERS *pParameters) override;
+	virtual HRESULT WINAPI SetOutputFilterParameters(IXAudio2Voice *pDestinationVoice, const XAUDIO2_FILTER_PARAMETERS *pParameters, UINT32 OperationSet) override;
+	virtual void WINAPI GetOutputFilterParameters(IXAudio2Voice *pDestinationVoice, XAUDIO2_FILTER_PARAMETERS *pParameters) override;
+	virtual HRESULT WINAPI SetVolume(float Volume, UINT32 OperationSet) override;
+	virtual void WINAPI GetVolume(float *pVolume) override;
+	virtual HRESULT WINAPI SetChannelVolumes(UINT32 Channels, const float *pVolumes, UINT32 OperationSet) override;
+	virtual void WINAPI GetChannelVolumes(UINT32 Channels, float *pVolumes) override;
+	virtual HRESULT WINAPI SetOutputMatrix(IXAudio2Voice *pDestinationVoice, UINT32 SourceChannels, UINT32 DestinationChannels, const float *pLevelMatrix, UINT32 OperationSet) override;
+	virtual void WINAPI GetOutputMatrix(IXAudio2Voice *pDestinationVoice, UINT32 SourceChannels, UINT32 DestinationChannels, float *pLevelMatrix) override;
+	virtual void WINAPI DestroyVoice() override;
 
 	MOXAudio2MasteringVoice( IXAudio2MasteringVoice* main, IXAudio2MasteringVoice* aux )
 		: m_mainVoice( main ), m_auxVoice( aux )
@@ -101,25 +101,25 @@ public:
 	virtual HRESULT WINAPI SetFrequencyRatio(float Ratio, UINT32 OperationSet) override;
 	virtual void WINAPI GetFrequencyRatio(float * pRatio) override;
 	virtual HRESULT WINAPI SetSourceSampleRate(UINT32 NewSourceSampleRate) override;
-	virtual void WINAPI GetVoiceDetails(XAUDIO2_VOICE_DETAILS *pVoiceDetails);
-	virtual HRESULT WINAPI SetOutputVoices(const XAUDIO2_VOICE_SENDS *pSendList);
-	virtual HRESULT WINAPI SetEffectChain(const XAUDIO2_EFFECT_CHAIN *pEffectChain);
-	virtual HRESULT WINAPI EnableEffect(UINT32 EffectIndex, UINT32 OperationSet);
-	virtual HRESULT WINAPI DisableEffect(UINT32 EffectIndex, UINT32 OperationSet);
-	virtual void WINAPI GetEffectState(UINT32 EffectIndex, BOOL *pEnabled);
-	virtual HRESULT WINAPI SetEffectParameters(UINT32 EffectIndex, const void *pParameters, UINT32 ParametersByteSize, UINT32 OperationSet);
-	virtual HRESULT WINAPI GetEffectParameters(UINT32 EffectIndex, void *pParameters, UINT32 ParametersByteSize);
-	virtual HRESULT WINAPI SetFilterParameters(const XAUDIO2_FILTER_PARAMETERS *pParameters, UINT32 OperationSet);
-	virtual void WINAPI GetFilterParameters(XAUDIO2_FILTER_PARAMETERS *pParameters);
-	virtual HRESULT WINAPI SetOutputFilterParameters(IXAudio2Voice *pDestinationVoice, const XAUDIO2_FILTER_PARAMETERS *pParameters, UINT32 OperationSet);
-	virtual void WINAPI GetOutputFilterParameters(IXAudio2Voice *pDestinationVoice, XAUDIO2_FILTER_PARAMETERS *pParameters);
-	virtual HRESULT WINAPI SetVolume(float Volume, UINT32 OperationSet);
-	virtual void WINAPI GetVolume(float *pVolume);
-	virtual HRESULT WINAPI SetChannelVolumes(UINT32 Channels, const float *pVolumes, UINT32 OperationSet);
-	virtual void WINAPI GetChannelVolumes(UINT32 Channels, float *pVolumes);
-	virtual HRESULT WINAPI SetOutputMatrix(IXAudio2Voice *pDestinationVoice, UINT32 SourceChannels, UINT32 DestinationChannels, const float *pLevelMatrix, UINT32 OperationSet);
-	virtual void WINAPI GetOutputMatrix(IXAudio2Voice *pDestinationVoice, UINT32 SourceChannels, UINT32 DestinationChannels, float *pLevelMatrix);
-	virtual void WINAPI DestroyVoice();
+	virtual void WINAPI GetVoiceDetails(XAUDIO2_VOICE_DETAILS *pVoiceDetails) override;
+	virtual HRESULT WINAPI SetOutputVoices(const XAUDIO2_VOICE_SENDS *pSendList) override;
+	virtual HRESULT WINAPI SetEffectChain(const XAUDIO2_EFFECT_CHAIN *pEffectChain) override;
+	virtual HRESULT WINAPI EnableEffect(UINT32 EffectIndex, UINT32 OperationSet) override;
+	virtual HRESULT WINAPI DisableEffect(UINT32 EffectIndex, UINT32 OperationSet) override;
+	virtual void WINAPI GetEffectState(UINT32 EffectIndex, BOOL *pEnabled) override;
+	virtual HRESULT WINAPI SetEffectParameters(UINT32 EffectIndex, const void *pParameters, UINT32 ParametersByteSize, UINT32 OperationSet) override;
+	virtual HRESULT WINAPI GetEffectParameters(UINT32 EffectIndex, void *pParameters, UINT32 ParametersByteSize) override;
+	virtual HRESULT WINAPI SetFilterParameters(const XAUDIO2_FILTER_PARAMETERS *pParameters, UINT32 OperationSet) override;
+	virtual void WINAPI GetFilterParameters(XAUDIO2_FILTER_PARAMETERS *pParameters) override;
+	virtual HRESULT WINAPI SetOutputFilterParameters(IXAudio2Voice *pDestinationVoice, const XAUDIO2_FILTER_PARAMETERS *pParameters, UINT32 OperationSet) override;
+	virtual void WINAPI GetOutputFilterParameters(IXAudio2Voice *pDestinationVoice, XAUDIO2_FILTER_PARAMETERS *pParameters) override;
+	virtual HRESULT WINAPI SetVolume(float Volume, UINT32 OperationSet) override;
+	virtual void WINAPI GetVolume(float *pVolume) override;
+	virtual HRESULT WINAPI SetChannelVolumes(UINT32 Channels, const float *pVolumes, UINT32 OperationSet) override;
+	virtual void WINAPI GetChannelVolumes(UINT32 Channels, float *pVolumes) override;
+	virtual HRESULT WINAPI SetOutputMatrix(IXAudio2Voice *pDestinationVoice, UINT32 SourceChannels, UINT32 DestinationChannels, const float *pLevelMatrix, UINT32 OperationSet) override;
+	virtual void WINAPI GetOutputMatrix(IXAudio2Voice *pDestinationVoice, UINT32 SourceChannels, UINT32 DestinationChannels, float *pLevelMatrix) override;
+	virtual void WINAPI DestroyVoice() override;
 
 	MOXAudio2SourceVoice( IXAudio2SourceVoice* main, IXAudio2SourceVoice* aux )
 		: m_mainVoice( main ), m_auxVoice( aux )
