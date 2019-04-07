@@ -39,14 +39,14 @@ HMODULE LoadRealXAudio2()
 }
 
 // Used by XAudio2.7
-HMODULE LoadRealLegacyXAudio2()
+HMODULE LoadRealLegacyXAudio2( bool debug )
 {
 	if ( hRealXAudio2 != nullptr ) return hRealXAudio2;
 
 	TCHAR dllPath[MAX_PATH];
 	if ( GetSystemDirectory( dllPath, MAX_PATH ) == 0 ) return hRealXAudio2;
 
-	PathAppend( dllPath, TEXT("xaudio2_7.dll") );
+	PathAppend( dllPath, debug ? TEXT("xaudioD2_7.dll") : TEXT("xaudio2_7.dll") );
 	return hRealXAudio2 = LoadLibrary( dllPath );
 }
 

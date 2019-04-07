@@ -639,7 +639,7 @@ void WINAPI MOXAudio2LegacyMasteringVoice::DestroyVoice()
 
 std::optional<HRESULT> CreateLegacyXAudio2(REFCLSID rclsid, REFIID riid, LPVOID *ppv)
 {
-	if ( rclsid != CLSID_XAudio2 )
+	if ( rclsid != CLSID_XAudio2 && rclsid != CLSID_XAudio2_Debug )
 	{
 		return {};
 	}
@@ -647,7 +647,7 @@ std::optional<HRESULT> CreateLegacyXAudio2(REFCLSID rclsid, REFIID riid, LPVOID 
 	using namespace Microsoft::WRL;
 	using namespace Microsoft::WRL::Wrappers;
 
-	HMODULE realXAudio2 = LoadRealLegacyXAudio2();
+	HMODULE realXAudio2 = LoadRealLegacyXAudio2( rclsid == CLSID_XAudio2_Debug );
 	if ( realXAudio2 == nullptr )
 	{
 		return XAUDIO2_E_INVALID_CALL;
