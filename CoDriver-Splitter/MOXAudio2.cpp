@@ -16,7 +16,7 @@
 #include "MOXAudio2_Common.h"
 #include "MOXAudio2_Hooks.h"
 
-#include "IID.h"
+#include "MOXAudio2.h"
 
 std::wstring GetCommunicationsDeviceString()
 {
@@ -67,7 +67,7 @@ std::wstring GetCommunicationsDeviceString()
 
 	return result;
 }
-class MOXAudio2 final : public IXAudio2
+class MOXAudio2 final : public IXAudio2, public IMOXAudio2
 {
 public:
 	// Inherited via IXAudio2
@@ -192,10 +192,16 @@ HRESULT WINAPI MOXAudio2::QueryInterface(REFIID riid, void ** ppvInterface)
 {
 	if ( ppvInterface == nullptr ) return E_POINTER;
 
-	if ( riid == IID_IUnknown || riid == __uuidof(IXAudio2) 
-		|| riid == IID_MOXAudio2 ) // Custom extension so wrappers are "self aware"
+	if ( riid == IID_IUnknown || riid == __uuidof(IXAudio2) )
 	{
 		*ppvInterface = static_cast<IXAudio2*>(this);
+		AddRef();
+		return S_OK;
+	}
+
+	if ( riid == __uuidof(IMOXAudio2) )
+	{
+		*ppvInterface = static_cast<IMOXAudio2*>(this);
 		AddRef();
 		return S_OK;
 	}
@@ -684,14 +690,14 @@ HRESULT WINAPI MOXAudio2Create( IXAudio2 **ppXAudio2, UINT32 Flags, XAUDIO2_PROC
 
 	// In DiRT Rally on Windows 10, it is possible that "real" XAudio2 is in fact our own XAudio2.9
 	// Try to detect this case and if it's really happening, don't wrap the APIs again
-	ComPtr<MOXAudio2> maybeMOXAudio2;
+	ComPtr<IMOXAudio2> maybeMOXAudio2;
 	if ( SUCCEEDED( mainDevice.As( &maybeMOXAudio2 ) ) )
 	{
-		*ppXAudio2 = maybeMOXAudio2.Detach();
+		*ppXAudio2 = mainDevice.Detach();
 		return S_OK;
 	}
 
-	ComPtr<IXAudio2> auxDevice = nullptr;
+	ComPtr<IXAudio2> auxDevice;
 	HRESULT hrAux = createFn( auxDevice.GetAddressOf(), Flags, XAudio2Processor );
 	if ( FAILED(hrAux) )
 	{

@@ -27,9 +27,6 @@
     <ClCompile Include="dllmain.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="IID.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="MOXAudio2Legacy.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -41,14 +38,14 @@
     <ClInclude Include="MOXAudio2_Hooks.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="IID.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="Detours\detours.h">
       <Filter>Header Files\Detours</Filter>
     </ClInclude>
     <ClInclude Include="Detours\detver.h">
       <Filter>Header Files\Detours</Filter>
+    </ClInclude>
+    <ClInclude Include="MOXAudio2.h">
+      <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

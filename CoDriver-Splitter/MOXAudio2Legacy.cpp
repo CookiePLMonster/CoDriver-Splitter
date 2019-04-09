@@ -16,7 +16,7 @@
 #include "MOXAudio2_Common.h"
 #include "MOXAudio2_Hooks.h"
 
-#include "IID.h"
+#include "MOXAudio2.h"
 
 DWORD GetCommunicationsDeviceID( IXAudio2* xaudio )
 {
@@ -40,7 +40,7 @@ DWORD GetCommunicationsDeviceID( IXAudio2* xaudio )
 
 static ULONG objectsCount = 0;
 
-class MOXAudio2Legacy final : public IXAudio2
+class MOXAudio2Legacy final : public IXAudio2, public IMOXAudio2
 {
 public:
 	// Inherited via IXAudio2
@@ -172,10 +172,16 @@ HRESULT WINAPI MOXAudio2Legacy::QueryInterface(REFIID riid, void ** ppvInterface
 {
 	if ( ppvInterface == nullptr ) return E_POINTER;
 
-	if ( riid == IID_IUnknown || riid == __uuidof(IXAudio2) 
-		|| riid == IID_MOXAudio2 ) // Custom extension so wrappers are "self aware"
+	if ( riid == IID_IUnknown || riid == __uuidof(IXAudio2) )
 	{
 		*ppvInterface = static_cast<IXAudio2*>(this);
+		AddRef();
+		return S_OK;
+	}
+
+	if ( riid == __uuidof(IMOXAudio2) )
+	{
+		*ppvInterface = static_cast<IMOXAudio2*>(this);
 		AddRef();
 		return S_OK;
 	}
@@ -686,10 +692,10 @@ std::optional<HRESULT> CreateLegacyXAudio2(REFCLSID rclsid, REFIID riid, LPVOID 
 		return hr;
 	}
 
-	ComPtr<MOXAudio2Legacy> moxaDevice;
-	if ( SUCCEEDED( mainDevice.As( &moxaDevice ) ) )
+	ComPtr<IMOXAudio2> maybeMoxaDevice;
+	if ( SUCCEEDED( mainDevice.As( &maybeMoxaDevice ) ) )
 	{
-		*ppv = moxaDevice.Detach();
+		*ppv = mainDevice.Detach();
 		return S_OK;
 	}
 
@@ -700,10 +706,11 @@ std::optional<HRESULT> CreateLegacyXAudio2(REFCLSID rclsid, REFIID riid, LPVOID 
 		return hr;
 	}
 
-	moxaDevice.Attach( new MOXAudio2Legacy( mainDevice.Detach(), auxDevice.Detach() ) );
+	ComPtr<IXAudio2> newDevice;
+	newDevice.Attach( new MOXAudio2Legacy( mainDevice.Detach(), auxDevice.Detach() ) );
 
 	// Query it to whatever the game wanted just to be extra sure
-	return moxaDevice.CopyTo( riid, ppv );
+	return newDevice.CopyTo( riid, ppv );
 }
 
 

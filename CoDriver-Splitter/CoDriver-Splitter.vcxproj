@@ -136,7 +136,6 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="dllmain.cpp" />
-    <ClCompile Include="IID.cpp" />
     <ClCompile Include="MOXAudio2.cpp" />
     <ClCompile Include="MOXAudio2Legacy.cpp">
       <AdditionalIncludeDirectories Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(DXSDK_DIR)\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
@@ -149,7 +148,7 @@
   <ItemGroup>
     <ClInclude Include="Detours\detours.h" />
     <ClInclude Include="Detours\detver.h" />
-    <ClInclude Include="IID.h" />
+    <ClInclude Include="MOXAudio2.h" />
     <ClInclude Include="MOXAudio2_Common.h" />
     <ClInclude Include="MOXAudio2_Hooks.h" />
   </ItemGroup>
