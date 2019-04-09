@@ -417,6 +417,7 @@ void MOXAudio2SourceVoice::GetVoiceDetails(XAUDIO2_VOICE_DETAILS * pVoiceDetails
 {
 	// No need to call this on auxillary voice
 	m_mainVoice->GetVoiceDetails(pVoiceDetails);
+	pVoiceDetails->CreationFlags |= MOXAUDIO2_VOICE_MULTIOUTPUT;
 }
 
 HRESULT MOXAudio2SourceVoice::SetOutputVoices(const XAUDIO2_VOICE_SENDS * pSendList)
@@ -551,6 +552,7 @@ void WINAPI MOXAudio2MasteringVoice::GetVoiceDetails(XAUDIO2_VOICE_DETAILS * pVo
 {
 	// No need to call this on auxillary voice
 	m_mainVoice->GetVoiceDetails( pVoiceDetails );
+	pVoiceDetails->CreationFlags |= MOXAUDIO2_VOICE_MULTIOUTPUT;
 }
 
 HRESULT WINAPI MOXAudio2MasteringVoice::SetOutputVoices(const XAUDIO2_VOICE_SENDS * pSendList)
