@@ -279,7 +279,7 @@ HRESULT WINAPI MOXAudio2::CreateSourceVoice(IXAudio2SourceVoice ** ppSourceVoice
 	return result;
 }
 
-HRESULT WINAPI MOXAudio2::CreateSubmixVoice(IXAudio2SubmixVoice ** ppSubmixVoice, UINT32 InputChannels, UINT32 InputSampleRate, UINT32 Flags, UINT32 ProcessingStage, const XAUDIO2_VOICE_SENDS *pSendList, const XAUDIO2_EFFECT_CHAIN *pEffectChain)
+HRESULT WINAPI MOXAudio2::CreateSubmixVoice(IXAudio2SubmixVoice ** /*ppSubmixVoice*/, UINT32 /*InputChannels*/, UINT32 /*InputSampleRate*/, UINT32 /*Flags*/, UINT32 /*ProcessingStage*/, const XAUDIO2_VOICE_SENDS * /*pSendList*/, const XAUDIO2_EFFECT_CHAIN * /*pEffectChain*/)
 {
 	assert( !"Submix voices not supported!");
 	return E_NOTIMPL;

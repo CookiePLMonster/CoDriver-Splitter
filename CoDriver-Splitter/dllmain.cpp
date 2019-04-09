@@ -62,7 +62,7 @@ HRESULT WINAPI CoCreateInstance_Hook(REFCLSID rclsid, LPUNKNOWN pUnkOuter, DWORD
 }
 
 
-BOOL APIENTRY DllMain( HMODULE hModule,
+BOOL APIENTRY DllMain( HMODULE /*hModule*/,
 	DWORD  ul_reason_for_call,
 	LPVOID /*lpReserved*/
 )

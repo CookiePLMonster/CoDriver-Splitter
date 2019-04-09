@@ -259,7 +259,7 @@ HRESULT WINAPI MOXAudio2Legacy::CreateSourceVoice(IXAudio2SourceVoice ** ppSourc
 	return result;
 }
 
-HRESULT WINAPI MOXAudio2Legacy::CreateSubmixVoice(IXAudio2SubmixVoice ** ppSubmixVoice, UINT32 InputChannels, UINT32 InputSampleRate, UINT32 Flags, UINT32 ProcessingStage, const XAUDIO2_VOICE_SENDS *pSendList, const XAUDIO2_EFFECT_CHAIN *pEffectChain)
+HRESULT WINAPI MOXAudio2Legacy::CreateSubmixVoice(IXAudio2SubmixVoice ** /*ppSubmixVoice*/, UINT32 /*InputChannels*/, UINT32 /*InputSampleRate*/, UINT32 /*Flags*/, UINT32 /*ProcessingStage*/, const XAUDIO2_VOICE_SENDS * /*pSendList*/, const XAUDIO2_EFFECT_CHAIN * /*pEffectChain*/)
 {
 	assert( !"Submix voices not supported!");
 	return E_NOTIMPL;
@@ -752,7 +752,7 @@ public:
 		return ref;
 	}
 
-	virtual HRESULT WINAPI CreateInstance(IUnknown * pUnkOuter, REFIID riid, void ** ppvObject) override
+	virtual HRESULT WINAPI CreateInstance(IUnknown * /*pUnkOuter*/, REFIID riid, void ** ppvObject) override
 	{
 		auto hr = CreateLegacyXAudio2( m_clsid, riid, ppvObject );
 		return hr ? *hr : E_NOINTERFACE;
