@@ -79,7 +79,7 @@ public:
 private:
 	IXAudio2*	m_mainXA2;
 	IXAudio2*	m_auxXA2;
-	LONG		m_ref = 1;
+	ULONG		m_ref = 1;
 
 	UINT32		m_mainNumChannels = 0;
 	UINT32		m_auxNumChannels = 0;
@@ -197,7 +197,7 @@ ULONG WINAPI MOXAudio2Legacy::AddRef(void)
 
 ULONG WINAPI MOXAudio2Legacy::Release(void)
 {
-	const LONG ref = InterlockedDecrement( &m_ref );
+	const ULONG ref = InterlockedDecrement( &m_ref );
 	if ( ref == 0 )
 	{
 		delete this;
