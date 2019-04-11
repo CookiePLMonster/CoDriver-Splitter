@@ -1,3 +1,4 @@
+LIBRARY XAudio2_7
 EXPORTS
 	XAudio2Create=XAudio2Create_Export
 	DllGetClassObject=DllGetClassObject_Export PRIVATE
