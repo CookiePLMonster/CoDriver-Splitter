@@ -11,7 +11,11 @@ interface __declspec(uuid("6CE3D7FC-ED78-4256-BCAF-1088C153C9EA")) IMOXAudio2;
 
 __interface IMOXAudio2 : public IUnknown
 {
-	// Deliberately left empty, at the moment nothing is needed here
+	// Obtains underlying IXAudio2 devices. This function increases the reference count of returned objects.
+	HRESULT WINAPI GetInternalObjects( IXAudio2** mainDevice, IXAudio2** auxDevice );
+
+	// Given an IXAudio2Voice, obtains underlying IXAudio2Voice's. If a source voice is not from MOXAudio2 device, function reports failure.
+	HRESULT WINAPI GetInternalVoices( IXAudio2Voice* srcVoice, IXAudio2Voice** outMainVoice, IXAudio2Voice** outAuxVoice );
 };
 
 #endif

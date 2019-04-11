@@ -16,7 +16,7 @@
 #include "MOXAudio2_Common.h"
 #include "MOXAudio2_Hooks.h"
 
-#include "MOXAudio2.h"
+#include "IMOXAudio2.h"
 
 std::wstring GetCommunicationsDeviceString()
 {
@@ -85,6 +85,10 @@ public:
 	virtual void WINAPI GetPerformanceData(XAUDIO2_PERFORMANCE_DATA * pPerfData) override;
 	virtual void WINAPI SetDebugConfiguration(const XAUDIO2_DEBUG_CONFIGURATION * pDebugConfiguration, void *pReserved) override;
 
+	// IMOXAudio2 extensions
+	virtual HRESULT WINAPI GetInternalObjects( IXAudio2** mainDevice, IXAudio2** auxDevice ) override;
+	virtual HRESULT WINAPI GetInternalVoices( IXAudio2Voice* srcVoice, IXAudio2Voice** outMainVoice, IXAudio2Voice** outAuxVoice ) override;
+
 	MOXAudio2( IXAudio2* main, IXAudio2* aux )
 		: m_mainXA2( main ), m_auxXA2( aux )
 	{
@@ -103,6 +107,18 @@ private:
 
 	DWORD		m_mainNumChannels = 0;
 	DWORD		m_auxNumChannels = 0;
+};
+
+// Internal use only, not instantiated explicitly anywhere!
+class MOXAudio2Voice final : public IXAudio2Voice
+{
+public:
+	IXAudio2Voice* GetMainVoice() { return m_mainVoice; }
+	IXAudio2Voice* GetAuxVoice() { return m_auxVoice; }
+
+public:
+	IXAudio2Voice* m_mainVoice;
+	IXAudio2Voice* m_auxVoice;
 };
 
 class MOXAudio2MasteringVoice final : public IXAudio2MasteringVoice
@@ -133,6 +149,8 @@ public:
 	MOXAudio2MasteringVoice( IXAudio2MasteringVoice* main, IXAudio2MasteringVoice* aux )
 		: m_mainVoice( main ), m_auxVoice( aux )
 	{
+		static_assert( offsetof(MOXAudio2Voice, m_mainVoice) == offsetof(MOXAudio2MasteringVoice, m_mainVoice) );
+		static_assert( offsetof(MOXAudio2Voice, m_auxVoice) == offsetof(MOXAudio2MasteringVoice, m_auxVoice) );
 	}
 
 private:
@@ -178,6 +196,8 @@ public:
 	MOXAudio2SourceVoice( IXAudio2SourceVoice* main, IXAudio2SourceVoice* aux, SIZE_T RingBufferSize )
 		: m_mainVoice( main ), m_auxVoice( aux ), m_auxVoiceBuffer( RingBufferSize )
 	{
+		static_assert( offsetof(MOXAudio2Voice, m_mainVoice) == offsetof(MOXAudio2SourceVoice, m_mainVoice) );
+		static_assert( offsetof(MOXAudio2Voice, m_auxVoice) == offsetof(MOXAudio2SourceVoice, m_auxVoice) );
 	}
 
 private:
@@ -348,6 +368,53 @@ void WINAPI MOXAudio2::SetDebugConfiguration(const XAUDIO2_DEBUG_CONFIGURATION *
 	m_mainXA2->SetDebugConfiguration(pDebugConfiguration, pReserved);
 }
 
+
+// IMOXAudio2 extensions
+HRESULT WINAPI MOXAudio2::GetInternalObjects( IXAudio2** mainDevice, IXAudio2** auxDevice )
+{
+	if ( mainDevice == nullptr || auxDevice == nullptr )
+	{
+		return E_INVALIDARG;
+	}
+
+	m_mainXA2->AddRef();
+	*mainDevice = m_mainXA2;
+
+	m_auxXA2->AddRef();
+	*auxDevice = m_auxXA2;
+
+	return S_OK;
+}
+
+HRESULT WINAPI MOXAudio2::GetInternalVoices(IXAudio2Voice* srcVoice, IXAudio2Voice** outMainVoice, IXAudio2Voice** outAuxVoice)
+{
+	if ( outMainVoice == nullptr || outAuxVoice == nullptr )
+	{
+		return E_INVALIDARG;
+	}
+
+	*outMainVoice = nullptr;
+	*outAuxVoice = nullptr;
+
+	if ( srcVoice == nullptr )
+	{
+		return XAUDIO2_E_INVALID_CALL;
+	}
+
+	XAUDIO2_VOICE_DETAILS details;
+	srcVoice->GetVoiceDetails( &details );
+	if ( (details.CreationFlags & MOXAUDIO2_VOICE_MULTIOUTPUT) == 0 )
+	{
+		return XAUDIO2_E_INVALID_CALL;
+	}
+
+	// srcVoice is a multi output voice
+	MOXAudio2Voice* moxaVoice = reinterpret_cast<MOXAudio2Voice*>(srcVoice);
+	*outMainVoice = moxaVoice->GetMainVoice();
+	*outAuxVoice = moxaVoice->GetAuxVoice();
+
+	return S_OK;
+}
 
 
 HRESULT WINAPI MOXAudio2SourceVoice::Start(UINT32 Flags, UINT32 OperationSet)

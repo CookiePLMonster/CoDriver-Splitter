@@ -148,7 +148,7 @@
   <ItemGroup>
     <ClInclude Include="Detours\detours.h" />
     <ClInclude Include="Detours\detver.h" />
-    <ClInclude Include="MOXAudio2.h" />
+    <ClInclude Include="IMOXAudio2.h" />
     <ClInclude Include="MOXAudio2_Common.h" />
     <ClInclude Include="MOXAudio2_Hooks.h" />
   </ItemGroup>
