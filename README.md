@@ -15,5 +15,4 @@ Previously people hacked such setups around by faking a 5.1 speaker set and plug
 
 # Installation and usage
 
-You don't need to do much to make sure Co-Driver Splitter picks correct audio devices. All you need to do is to ensure that in Sound, your Default Communications Device is set to headphones,
-while Default Device -- speakers or other device you want to play environment sounds through.
+For installation and set-up instructions, please refer to [the Wiki page](https://github.com/CookiePLMonster/CoDriver-Splitter/wiki).
